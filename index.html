@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiss Grid Explorer · v1.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================ */
+  /* DESIGN TOKENS                                                  */
+  /* ============================================================ */
+  :root {
+    /* Palette - sophisticated dark, not pure black */
+    --bg-base: #0d0e10;
+    --bg-elevated: #15171a;
+    --bg-input: #1a1d20;
+    --bg-input-focus: #1e2226;
+    --bg-hover: #1f2226;
+
+    --border-subtle: #1f2227;
+    --border: #25282d;
+    --border-strong: #2f3338;
+    --border-focus: #4a4f56;
+
+    --text-primary: #e8e9ec;
+    --text-secondary: #a0a5ad;
+    --text-tertiary: #8e9299;
+    --text-quaternary: #72787f;
+
+    --accent: #4cc2ff;
+    --accent-dim: #4cc2ff80;
+    --accent-faint: #4cc2ff14;
+    --accent-glow: #4cc2ff33;
+
+    --warm: #fb8d2b;
+    --success: #8bd17c;
+    --warning: #f5a623;
+    --error: #ff6b6b;
+
+    /* Typography */
+    --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+    /* Spacing & sizing */
+    --header-h: 56px;
+    --footer-h: 64px;
+    --rail-w: 280px;
+    --gallery-w: 300px;
+    --radius: 4px;
+    --radius-sm: 3px;
+
+    /* Motion */
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    font-feature-settings: "ss01", "ss02";
+    font-variation-settings: "wdth" 100;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+
+  /* Subtle grain on background for sophistication */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.5'/></svg>");
+  }
+
+  /* ============================================================ */
+  /* LAYOUT                                                         */
+  /* ============================================================ */
+  .app {
+    display: grid;
+    grid-template-rows: var(--header-h) 1fr var(--footer-h);
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER ====================================================== */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-base);
+  }
+  .header__brand {
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  .header__title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+  .header__title em {
+    font-style: normal;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+  .header__center {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-quaternary);
+    text-transform: uppercase;
+  }
+  .header__nav {
+    display: flex; gap: 4px; justify-content: flex-end;
+    align-items: center;
+  }
+  .nav-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 120ms var(--ease);
+  }
+  .nav-btn:hover { color: var(--text-primary); background: var(--bg-hover); }
+  .nav-btn.active { color: var(--accent); }
+  .nav-sep {
+    width: 1px; height: 14px; background: var(--border);
+    margin: 0 4px;
+  }
+
+  /* MAIN ======================================================== */
+  .main {
+    display: grid;
+    grid-template-columns: var(--rail-w) 1fr var(--gallery-w);
+    overflow: hidden;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  /* RAIL (left + right common) =================================== */
+  .rail {
+    overflow-y: auto;
+    padding: 20px 22px;
+    border-right: 1px solid var(--border-subtle);
+    display: flex; flex-direction: column; gap: 24px;
+  }
+  .rail--right {
+    border-right: none;
+    border-left: 1px solid var(--border-subtle);
+  }
+  .rail::-webkit-scrollbar { width: 6px; }
+  .rail::-webkit-scrollbar-track { background: transparent; }
+  .rail::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .section { display: flex; flex-direction: column; gap: 10px; }
+  .section__header {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-bottom: 4px;
+  }
+  .section__num {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--text-quaternary);
+    letter-spacing: 0.1em;
+  }
+  .section__title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .section__rule {
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+    margin-left: 4px;
+  }
+
+  /* CONTROLS ==================================================== */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field__row { display: flex; align-items: center; gap: 8px; }
+  .field__label {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    letter-spacing: -0.005em;
+  }
+  .field__value {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    width: 60px;
+    text-align: right;
+    transition: border-color 100ms var(--ease);
+    font-feature-settings: "tnum";
+  }
+  .field__value:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    background: var(--bg-input-focus);
+  }
+  /* Slider */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 22px;
+    background: transparent;
+    cursor: pointer;
+    margin: 0;
+  }
+  .slider::-webkit-slider-runnable-track {
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--text-primary);
+    border: 2px solid var(--bg-base);
+    border-radius: 50%;
+    margin-top: -5px;
+    transition: transform 100ms var(--ease), box-shadow 100ms var(--ease);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+  .slider:hover::-webkit-slider-thumb {
+    background: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-glow);
+  }
+  .slider:focus { outline: none; }
+  .slider:focus::-webkit-slider-thumb {
+    background: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-glow);
+  }
+  .slider::-moz-range-track {
+    height: 2px; background: var(--border); border-radius: 1px;
+  }
+  .slider::-moz-range-thumb {
+    width: 12px; height: 12px;
+    background: var(--text-primary);
+    border: 2px solid var(--bg-base);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+
+  /* Select / dropdown */
+  .select {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    padding: 8px 28px 8px 10px;
+    border-radius: var(--radius-sm);
+    appearance: none;
+    cursor: pointer;
+    transition: border-color 100ms var(--ease);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1L5 5L9 1' stroke='%238a8e95' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .select:hover { border-color: var(--border-strong); }
+  .select:focus { outline: none; border-color: var(--border-focus); background-color: var(--bg-input-focus); }
+
+  /* Dimension input pair */
+  .dim {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .dim__cell { display: flex; flex-direction: column; gap: 4px; }
+  .dim__label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+  .dim__input {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    width: 100%;
+    transition: border-color 100ms var(--ease);
+  }
+  .dim__input:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    background: var(--bg-input-focus);
+  }
+
+  /* Hide native number-input spinners across browsers */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  /* Custom stepper chevrons - appear on hover/focus only */
+  .num-wrap {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+  }
+  .num-wrap--block { display: block; width: 100%; }
+  .num-wrap--auto { margin-left: auto; }
+  .num-wrap input {
+    padding-right: 18px;
+  }
+  .num-wrap--auto input { margin-left: 0 !important; }
+
+  .num-stepper {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    opacity: 0;
+    transition: opacity 140ms var(--ease);
+    pointer-events: none;
+    line-height: 1;
+  }
+  .num-wrap:hover .num-stepper,
+  .num-wrap:focus-within .num-stepper {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .num-stepper__btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    width: 14px;
+    height: 9px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 1px;
+    transition: color 100ms var(--ease), background 100ms var(--ease);
+  }
+  .num-stepper__btn:hover {
+    color: var(--accent);
+    background: var(--accent-faint);
+  }
+  .num-stepper__btn:active {
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .num-stepper__btn svg { display: block; }
+
+  /* Preset library */
+  .preset-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .preset {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    cursor: pointer;
+    transition: all 150ms var(--ease);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    font-family: inherit;
+    color: inherit;
+  }
+  .preset:hover {
+    border-color: var(--border-focus);
+    background: var(--bg-hover);
+    transform: translateY(-1px);
+  }
+  .preset__thumb {
+    aspect-ratio: 1;
+    background: var(--bg-input);
+    border-radius: 2px;
+    padding: 6px;
+    display: grid;
+    gap: 1.5px;
+  }
+  .preset__cell {
+    background: var(--accent-dim);
+    border-radius: 1px;
+  }
+  .preset:hover .preset__cell { background: var(--accent); }
+  .preset__meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .preset__name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: -0.005em;
+  }
+  .preset__dims {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.05em;
+  }
+
+  /* Checkbox */
+  .checkbox {
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .checkbox input { display: none; }
+  .checkbox__box {
+    width: 14px; height: 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    background: var(--bg-input);
+    display: grid; place-items: center;
+    transition: all 100ms var(--ease);
+  }
+  .checkbox input:checked + .checkbox__box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .checkbox__box::after {
+    content: "";
+    width: 8px; height: 4px;
+    border: 1.5px solid var(--bg-base);
+    border-top: 0; border-right: 0;
+    transform: rotate(-45deg) translate(1px, -1px) scale(0);
+    transition: transform 120ms var(--ease);
+  }
+  .checkbox input:checked + .checkbox__box::after { transform: rotate(-45deg) translate(1px, -1px) scale(1); }
+  .checkbox__label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  /* CANVAS ====================================================== */
+  .canvas-wrap {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at center, rgba(76,194,255,0.025) 0%, transparent 60%),
+      var(--bg-base);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  .canvas-top {
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .canvas-top__label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-quaternary);
+    text-transform: uppercase;
+  }
+  .canvas-top__alert {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid;
+    border-radius: var(--radius-sm);
+    transition: all 200ms var(--ease);
+  }
+  .alert--vertical { color: var(--success); border-color: rgba(139,209,124,0.3); background: rgba(139,209,124,0.06); }
+  .alert--horizontal { color: var(--error); border-color: rgba(255,107,107,0.3); background: rgba(255,107,107,0.06); }
+  .alert--square { color: var(--warm); border-color: rgba(251,141,43,0.3); background: rgba(251,141,43,0.06); }
+  .alert--error { color: var(--error); border-color: rgba(255,107,107,0.4); background: rgba(255,107,107,0.1); }
+
+  .canvas {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    overflow: hidden;
+  }
+  #preview {
+    max-width: 100%;
+    max-height: 100%;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.4));
+  }
+
+  .canvas-bottom {
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .stat {
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .stat__label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--text-quaternary);
+    text-transform: uppercase;
+  }
+  .stat__value {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-feature-settings: "tnum";
+  }
+
+  /* FOOTER ====================================================== */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    background: var(--bg-base);
+  }
+  .footer__group { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 150ms var(--ease);
+    letter-spacing: -0.005em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover {
+    border-color: var(--border-focus);
+    color: var(--text-primary);
+    background: var(--bg-hover);
+  }
+  .btn--primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg-base);
+    font-weight: 600;
+    padding: 8px 20px;
+  }
+  .btn--primary:hover {
+    background: #62cdff;
+    border-color: #62cdff;
+    color: var(--bg-base);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(76,194,255,0.2);
+  }
+  .btn__kbd {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.05em;
+    padding-left: 6px;
+    border-left: 1px solid var(--border);
+    margin-left: 2px;
+  }
+  .btn--primary .btn__kbd { color: rgba(13,14,16,0.5); border-color: rgba(13,14,16,0.2); }
+
+  /* Footer links — GitHub y Ko-fi */
+  .footer__link {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    text-decoration: none;
+    border-bottom: none;
+    transition: color 150ms var(--ease);
+  }
+  .footer__link:hover { color: var(--accent); border-bottom: none; }
+  .footer__link--kofi:hover { color: var(--warm); }
+  .footer__sep {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-quaternary);
+    margin: 0 6px;
+  }
+
+  /* MODAL ======================================================= */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    place-items: center;
+    z-index: 100;
+    animation: fadeIn 200ms var(--ease);
+  }
+  .modal-overlay.show { display: grid; }
+  .modal {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    max-width: 440px;
+    width: 90%;
+    padding: 32px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    animation: slideUp 280ms var(--ease);
+  }
+  .modal__title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    letter-spacing: -0.015em;
+  }
+  .modal__body {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    white-space: pre-wrap;
+    margin-bottom: 24px;
+  }
+  .modal__body strong { color: var(--text-primary); font-weight: 500; }
+  .modal__close {
+    background: var(--accent);
+    color: var(--bg-base);
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+
+  /* Hidden file input */
+  .hidden-input { display: none; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    opacity: 0;
+    transition: all 240ms var(--ease);
+    pointer-events: none;
+    z-index: 200;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast--error { border-color: rgba(255,107,107,0.5); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header__brand">
+      <div class="header__title">Swiss Grid Explorer <em>· Web</em></div>
+    </div>
+    <div class="header__center" id="header-doc-info">A4 · 210 × 297 MM</div>
+    <nav class="header__nav">
+      <button class="nav-btn active" id="lang-es">ES</button>
+      <button class="nav-btn" id="lang-en">EN</button>
+      <span class="nav-sep"></span>
+      <button class="nav-btn" id="btn-about" data-i18n="about">Acerca de</button>
+    </nav>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- LEFT RAIL: Parameters -->
+    <aside class="rail">
+
+      <div class="section">
+        <div class="section__header">
+          <span class="section__num">01</span>
+          <span class="section__title" data-i18n="document">Documento</span>
+          <div class="section__rule"></div>
+        </div>
+        <div class="field">
+          <span class="field__label" data-i18n="format">Formato</span>
+          <select class="select" id="format">
+            <option value="custom" data-i18n="custom">Personalizado</option>
+            <option value="a3">A3 · 297 × 420 mm</option>
+            <option value="a4" selected>A4 · 210 × 297 mm</option>
+            <option value="a5">A5 · 148 × 210 mm</option>
+            <option value="letter">US Letter · 8.5 × 11 in</option>
+            <option value="legal">US Legal · 8.5 × 14 in</option>
+            <option value="poster">Poster · 50 × 70 cm</option>
+            <option value="square">Square · 200 × 200 mm</option>
+            <option value="web-1440">Web · 1440 × 900 px</option>
+            <option value="web-1920">Web · 1920 × 1080 px</option>
+            <option value="mobile">Mobile · 390 × 844 px</option>
+          </select>
+        </div>
+        <div class="dim">
+          <div class="dim__cell">
+            <span class="dim__label" data-i18n="width">Ancho</span>
+            <input class="dim__input" id="doc-w" type="number" min="10" step="1" value="210">
+          </div>
+          <div class="dim__cell">
+            <span class="dim__label" data-i18n="height">Alto</span>
+            <input class="dim__input" id="doc-h" type="number" min="10" step="1" value="297">
+          </div>
+        </div>
+        <div class="field">
+          <span class="field__label" data-i18n="unit">Unidad</span>
+          <select class="select" id="unit">
+            <option value="mm" selected>MM · milímetros</option>
+            <option value="cm">CM · centímetros</option>
+            <option value="in">IN · pulgadas</option>
+            <option value="pt">PT · puntos</option>
+            <option value="px">PX · píxeles</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section__header">
+          <span class="section__num">02</span>
+          <span class="section__title" data-i18n="grid">Retícula</span>
+          <div class="section__rule"></div>
+        </div>
+
+        <div class="field">
+          <div class="field__row">
+            <span class="field__label" data-i18n="columns">Columnas</span>
+            <input class="field__value" id="cols-val" type="number" min="1" max="32" value="4">
+          </div>
+          <input class="slider" id="cols" type="range" min="1" max="32" value="4">
+        </div>
+
+        <div class="field">
+          <div class="field__row">
+            <span class="field__label" data-i18n="rows">Filas</span>
+            <input class="field__value" id="rows-val" type="number" min="1" max="32" value="6">
+          </div>
+          <input class="slider" id="rows" type="range" min="1" max="32" value="6">
+        </div>
+
+        <div class="field">
+          <div class="field__row">
+            <span class="field__label" data-i18n="margins">Márgenes</span>
+            <input class="field__value" id="marg-val" type="number" min="0" max="200" step="0.5" value="15">
+          </div>
+          <input class="slider" id="marg" type="range" min="0" max="200" step="0.5" value="15">
+        </div>
+
+        <div class="field">
+          <div class="field__row">
+            <span class="field__label" data-i18n="gutter">Medianil</span>
+            <input class="field__value" id="gutt-val" type="number" min="0" max="80" step="0.5" value="5">
+          </div>
+          <input class="slider" id="gutt" type="range" min="0" max="80" step="0.5" value="5">
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section__header">
+          <span class="section__num">03</span>
+          <span class="section__title" data-i18n="output">Output</span>
+          <div class="section__rule"></div>
+        </div>
+        <label class="checkbox">
+          <input type="checkbox" id="chk-guides" checked>
+          <span class="checkbox__box"></span>
+          <span class="checkbox__label" data-i18n="genGuides">Generar guías</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="chk-margins" checked>
+          <span class="checkbox__box"></span>
+          <span class="checkbox__label" data-i18n="genMargins">Incluir margen</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="chk-numbers">
+          <span class="checkbox__box"></span>
+          <span class="checkbox__label" data-i18n="numberModules">Numerar módulos</span>
+        </label>
+      </div>
+
+    </aside>
+
+    <!-- CENTER: Preview -->
+    <section class="canvas-wrap">
+      <div class="canvas-top">
+        <span class="canvas-top__label" data-i18n="preview">Previsualización</span>
+        <span class="canvas-top__alert alert--vertical" id="alert" data-i18n="vertOptimal">Proporción vertical · Óptima</span>
+      </div>
+      <div class="canvas">
+        <svg id="preview" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="canvas-bottom">
+        <div class="stat">
+          <span class="stat__label" data-i18n="moduleW">Módulo W</span>
+          <span class="stat__value" id="stat-w">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat__label" data-i18n="moduleH">Módulo H</span>
+          <span class="stat__value" id="stat-h">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat__label" data-i18n="ratio">Proporción</span>
+          <span class="stat__value" id="stat-r">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat__label" data-i18n="total">Total</span>
+          <span class="stat__value" id="stat-t">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT RAIL: Iconic grids -->
+    <aside class="rail rail--right">
+      <div class="section">
+        <div class="section__header">
+          <span class="section__num">04</span>
+          <span class="section__title" data-i18n="iconic">Retículas icónicas</span>
+          <div class="section__rule"></div>
+        </div>
+        <div class="preset-grid" id="presets"></div>
+      </div>
+
+      <div class="section">
+        <div class="section__header">
+          <span class="section__num">05</span>
+          <span class="section__title" data-i18n="settings">Ajustes</span>
+          <div class="section__rule"></div>
+        </div>
+        <button class="btn" id="btn-import" style="width:100%; justify-content:center;" data-i18n="import">Importar JSON</button>
+        <button class="btn" id="btn-export" style="width:100%; justify-content:center;" data-i18n="export">Exportar JSON</button>
+        <input class="hidden-input" type="file" id="file-input" accept=".json">
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer__group">
+      <a href="https://github.com/vicc3d/swiss-grid-explorer" target="_blank" rel="noopener" class="footer__link">GitHub</a>
+      <span class="footer__sep">·</span>
+      <a href="https://ko-fi.com/vicc3d" target="_blank" rel="noopener" class="footer__link footer__link--kofi">Ko-fi</a>
+    </div>
+    <div class="footer__group">
+      <button class="btn" id="btn-svg-clip" data-i18n="copySvg">Copiar SVG</button>
+      <button class="btn btn--primary" id="btn-download">
+        <span data-i18n="downloadSvg">Descargar SVG</span>
+        <span class="btn__kbd">⌘ ↵</span>
+      </button>
+    </div>
+  </footer>
+
+</div>
+
+<!-- About modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 class="modal__title" id="modal-title">Acerca de Swiss Grid Explorer</h2>
+    <p class="modal__body" id="modal-body"></p>
+    <button class="modal__close" id="modal-close">OK</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================== */
+/* SWISS GRID EXPLORER — v1.1                                       */
+/* Concept, UX/UI & Design: Victor Crespo, 3dvic.com                */
+/* ============================================================== */
+
+const VERSION = "v1.1";
+
+// -------------------------------------------------------------- //
+// i18n                                                             //
+// -------------------------------------------------------------- //
+const i18n = {
+  es: {
+    about: "Acerca de", document: "Documento", format: "Formato",
+    width: "Ancho", height: "Alto", unit: "Unidad", grid: "Retícula",
+    columns: "Columnas", rows: "Filas", margins: "Márgenes", gutter: "Medianil",
+    output: "Output", genGuides: "Generar guías",
+    genMargins: "Incluir margen", numberModules: "Numerar módulos",
+    preview: "Previsualización", iconic: "Retículas icónicas",
+    settings: "Ajustes", import: "Importar JSON", export: "Exportar JSON",
+    copySvg: "Copiar SVG", downloadSvg: "Descargar SVG",
+    moduleW: "Módulo W", moduleH: "Módulo H", ratio: "Proporción", total: "Total",
+    custom: "Personalizado",
+    vertOptimal: "Proporción vertical · Óptima",
+    horizAlert: "Proporción horizontal · Evitar en texto",
+    squareOptimal: "Proporción cuadrada · Excelente",
+    errorMargins: "Error · Márgenes excesivos",
+    aboutTitle: "Acerca de Swiss Grid Explorer",
+    aboutBody: `Swiss Grid Explorer ${VERSION}\n\nUna herramienta de diseño paramétrico para la generación de retículas estructurales en formato SVG, compatible con Adobe Illustrator, Affinity Designer, Inkscape y editores web.\n\nLa retícula y las guías se exportan en grupos separados (<g>) con clases identificables, para que cada editor las reconozca como capas independientes.\n\n3dvic.com · MIT License`,
+    toastCopied: "SVG copiado al portapapeles",
+    toastDownload: "SVG descargado",
+    toastImport: "Ajustes importados correctamente",
+    toastImportError: "Error al leer el archivo JSON",
+    toastExport: "Ajustes exportados"
+  },
+  en: {
+    about: "About", document: "Document", format: "Format",
+    width: "Width", height: "Height", unit: "Unit", grid: "Grid",
+    columns: "Columns", rows: "Rows", margins: "Margins", gutter: "Gutter",
+    output: "Output", genGuides: "Generate guides",
+    genMargins: "Include margin", numberModules: "Number modules",
+    preview: "Preview", iconic: "Iconic grids",
+    settings: "Settings", import: "Import JSON", export: "Export JSON",
+    copySvg: "Copy SVG", downloadSvg: "Download SVG",
+    moduleW: "Module W", moduleH: "Module H", ratio: "Ratio", total: "Total",
+    custom: "Custom",
+    vertOptimal: "Vertical ratio · Optimal",
+    horizAlert: "Horizontal ratio · Avoid for text",
+    squareOptimal: "Square ratio · Excellent",
+    errorMargins: "Error · Excessive margins",
+    aboutTitle: "About Swiss Grid Explorer",
+    aboutBody: `Swiss Grid Explorer ${VERSION}\n\nA parametric design tool for generating structural grids as SVG files, compatible with Adobe Illustrator, Affinity Designer, Inkscape and web editors.\n\nThe grid and guides export in separate groups (<g>) with named classes, so each editor reads them as independent layers.\n\n3dvic.com · MIT License`,
+    toastCopied: "SVG copied to clipboard",
+    toastDownload: "SVG downloaded",
+    toastImport: "Settings imported successfully",
+    toastImportError: "Error reading JSON file",
+    toastExport: "Settings exported"
+  }
+};
+let currentLang = "es";
+const t = k => i18n[currentLang][k] || k;
+
+// -------------------------------------------------------------- //
+// Presets                                                          //
+// -------------------------------------------------------------- //
+// Presets store ratios (% of doc's minimum dimension) rather than absolute values.
+// This way each preset preserves its CHARACTER (dramatic vs minimal margins, etc.)
+// and adapts to any document size/unit automatically.
+// Ratios were derived from the historic original values on their reference document.
+const PRESETS = [
+  { id: "Brockmann", cols: 8, rows: 8, marginR: 0.057, gutterR: 0.019,
+    tip_es: "Brockmann (8×8)\nRetícula modular densa. El arquetipo del Diseño Suizo sistemático (Grid Systems, 1981). Cada módulo es una unidad de contenido independiente. Ideal para layouts editoriales complejos con múltiples jerarquías.",
+    tip_en: "Brockmann (8×8)\nDense modular grid. The archetype of systematic Swiss Design (Grid Systems, 1981). Each module is an independent content unit. Ideal for complex editorial layouts with multiple content hierarchies." },
+
+  { id: "Gerstner", cols: 6, rows: 6, marginR: 0.048, gutterR: 0.024,
+    tip_es: "Gerstner (6×6)\nRetícula de programa: toda decisión de layout surge de la lógica interna del módulo, no del ojo. Equilibrio entre flexibilidad y sistematismo (Designing Programmes, 1964).",
+    tip_en: "Gerstner (6×6)\nProgramme grid: every layout decision follows the module's internal logic, not intuition. Balance of flexibility and systematism (Designing Programmes, 1964)." },
+
+  { id: "Vignelli", cols: 3, rows: 4, marginR: 0.086, gutterR: 0.029,
+    tip_es: "Vignelli (3×4)\nInspirado en el Unigrid del NPS (1977). 3 columnas amplias con márgenes generosos capturan el carácter editorial de Vignelli. Nota: el sistema original usa un módulo de 10 unidades más complejo.",
+    tip_en: "Vignelli (3×4)\nInspired by the NPS Unigrid (1977). 3 wide columns with generous margins capture Vignelli's editorial character. Note: the original system uses a more complex 10-unit module." },
+
+  { id: "Tschichold", cols: 2, rows: 3, marginR: 0.119, gutterR: 0.038,
+    tip_es: "Tschichold (2×3)\n2 columnas amplias con márgenes dramáticos (12% del lado menor). El blanco generoso ES el diseño, no el sobrante. Basado en Die neue Typographie (1928).",
+    tip_en: "Tschichold (2×3)\n2 wide columns with dramatic margins (12% of min side). The generous white space IS the design, not the leftover. Based on Die neue Typographie (1928)." },
+
+  { id: "Digital 12", cols: 12, rows: 1, marginR: 0.067, gutterR: 0.022,
+    tip_es: "Web · 12 columnas\nEl estándar del diseño web responsive (Bootstrap, Foundation, 960gs). Una sola fila deja el eje vertical libre para el flujo de contenido. Escala proporcionalmente a cualquier breakpoint.",
+    tip_en: "Web · 12 columns\nThe responsive web design standard (Bootstrap, Foundation, 960gs). Single row leaves the vertical axis free for content flow. Scales proportionally to any breakpoint." },
+
+  { id: "Slides", cols: 4, rows: 3, marginR: 0.083, gutterR: 0.033,
+    tip_es: "Slides (4×3)\nRetícula para presentaciones (PowerPoint, Keynote, Google Slides). Aplicar sobre formatos widescreen (1920×1080, 1440×900). Genera módulos apaisados que acompañan el ritmo horizontal de pantallas 16:9.",
+    tip_en: "Slides (4×3)\nPresentation grid (PowerPoint, Keynote, Google Slides). Apply on widescreen formats (1920×1080, 1440×900). Produces landscape modules that follow the horizontal rhythm of 16:9 screens." }
+];
+
+const FORMATS = {
+  a3: { w: 297, h: 420, unit: "mm" },
+  a4: { w: 210, h: 297, unit: "mm" },
+  a5: { w: 148, h: 210, unit: "mm" },
+  letter: { w: 8.5, h: 11, unit: "in" },
+  legal: { w: 8.5, h: 14, unit: "in" },
+  poster: { w: 50, h: 70, unit: "cm" },
+  square: { w: 200, h: 200, unit: "mm" },
+  "web-1440": { w: 1440, h: 900, unit: "px" },
+  "web-1920": { w: 1920, h: 1080, unit: "px" },
+  mobile: { w: 390, h: 844, unit: "px" }
+};
+
+// -------------------------------------------------------------- //
+// Unit conversion (canonical reference: pt)                        //
+// -------------------------------------------------------------- //
+const TO_PT = { pt: 1, mm: 2.834645, cm: 28.34645, in: 72, px: 0.75 };
+const toPt = (v, u) => v * TO_PT[u];
+const fromPt = (v, u) => v / TO_PT[u];
+
+// -------------------------------------------------------------- //
+// State & control ranges                                           //
+// -------------------------------------------------------------- //
+const RANGES = {
+  cols: { min: 1, max: 32, int: true },
+  rows: { min: 1, max: 32, int: true },
+  margins: { min: 0, max: 200, int: false },
+  gutter: { min: 0, max: 80, int: false }
+};
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+const state = {
+  docW: 210, docH: 297, unit: "mm",
+  cols: 4, rows: 6, margins: 15, gutter: 5
+};
+
+// -------------------------------------------------------------- //
+// DOM helpers                                                      //
+// -------------------------------------------------------------- //
+const $ = id => document.getElementById(id);
+
+// -------------------------------------------------------------- //
+// Compute geometry (in document unit)                              //
+// -------------------------------------------------------------- //
+function computeGrid() {
+  const { docW, docH, cols, rows, margins, gutter } = state;
+  const gridW = docW - margins * 2;
+  const gridH = docH - margins * 2;
+  if (gridW <= 0 || gridH <= 0) return null;
+  const modW = (gridW - gutter * (cols - 1)) / cols;
+  const modH = (gridH - gutter * (rows - 1)) / rows;
+  if (modW <= 0 || modH <= 0) return null;
+  return { gridW, gridH, modW, modH };
+}
+
+// -------------------------------------------------------------- //
+// Build SVG (used for both preview AND export)                     //
+// -------------------------------------------------------------- //
+function buildSVG({ forExport = false, withGuides = true, withMargins = true, withNumbers = false } = {}) {
+  const { docW, docH, unit, cols, rows, margins, gutter } = state;
+  const geom = computeGrid();
+
+  // Scale factor for visual stroke widths (so they read well at any doc size)
+  const scaleRef = Math.max(docW, docH);
+  const strokeW = scaleRef * 0.0008; // ~0.5pt at A4
+
+  let svg = "";
+  if (forExport) {
+    svg += `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    svg += `<svg xmlns="http://www.w3.org/2000/svg" `;
+    svg += `xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" `;
+    svg += `xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.0.dtd" `;
+    svg += `width="${docW}${unit}" height="${docH}${unit}" `;
+    svg += `viewBox="0 0 ${docW} ${docH}">\n`;
+    svg += `  <title>Swiss Grid — ${cols}×${rows}</title>\n`;
+    svg += `  <desc>Generated by Swiss Grid Explorer ${VERSION}</desc>\n`;
+    // metadata block
+    svg += `  <metadata>\n`;
+    svg += `    <sge:settings xmlns:sge="https://swissgrid.app">\n`;
+    svg += `      <sge:cols>${cols}</sge:cols>\n`;
+    svg += `      <sge:rows>${rows}</sge:rows>\n`;
+    svg += `      <sge:margins>${margins}</sge:margins>\n`;
+    svg += `      <sge:gutter>${gutter}</sge:gutter>\n`;
+    svg += `      <sge:unit>${unit}</sge:unit>\n`;
+    svg += `    </sge:settings>\n`;
+    svg += `  </metadata>\n`;
+  } else {
+    svg += `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${docW} ${docH}" preserveAspectRatio="xMidYMid meet">`;
+  }
+
+  // Document outline (paper)
+  if (forExport) {
+    svg += `  <g id="document" inkscape:groupmode="layer" inkscape:label="Document">\n`;
+    svg += `    <rect x="0" y="0" width="${docW}" height="${docH}" fill="white" stroke="none"/>\n`;
+    svg += `  </g>\n`;
+  } else {
+    // In preview: paper rectangle
+    svg += `<rect x="0" y="0" width="${docW}" height="${docH}" fill="#1e2024" stroke="#2a2e34" stroke-width="${strokeW * 1.5}"/>`;
+  }
+
+  if (!geom) {
+    if (!forExport) svg += `</svg>`;
+    else svg += `</svg>`;
+    return svg;
+  }
+  const { modW, modH } = geom;
+
+  // Margin rectangle (subtle in preview, optional in export)
+  if (withMargins && forExport) {
+    svg += `  <g id="margin" inkscape:groupmode="layer" inkscape:label="Margin" stroke="#888" stroke-width="${strokeW * 0.5}" stroke-dasharray="${strokeW * 4} ${strokeW * 2}" fill="none">\n`;
+    svg += `    <rect x="${margins}" y="${margins}" width="${docW - margins * 2}" height="${docH - margins * 2}"/>\n`;
+    svg += `  </g>\n`;
+  } else if (!forExport) {
+    svg += `<rect x="${margins}" y="${margins}" width="${docW - margins * 2}" height="${docH - margins * 2}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeW * 0.5}" stroke-dasharray="${strokeW * 3} ${strokeW * 2}"/>`;
+  }
+
+  // Build module rectangles
+  const moduleStroke = forExport ? "#00A0FF" : "#4cc2ff";
+  const moduleStrokeW = forExport ? strokeW : strokeW * 1.2;
+
+  if (forExport) {
+    svg += `  <g id="grid" inkscape:groupmode="layer" inkscape:label="Grid" stroke="${moduleStroke}" stroke-width="${moduleStrokeW}" fill="none">\n`;
+  } else {
+    svg += `<g>`;
+  }
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = margins + c * (modW + gutter);
+      const y = margins + r * (modH + gutter);
+      if (forExport) {
+        svg += `    <rect x="${x.toFixed(4)}" y="${y.toFixed(4)}" width="${modW.toFixed(4)}" height="${modH.toFixed(4)}"/>\n`;
+      } else {
+        const isFirst = r === 0 && c === 0;
+        const fill = isFirst ? "rgba(76,194,255,0.18)" : "none";
+        const stroke = isFirst ? "#9fdcff" : moduleStroke;
+        const sw = isFirst ? moduleStrokeW * 1.8 : moduleStrokeW;
+        svg += `<rect x="${x}" y="${y}" width="${modW}" height="${modH}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+      }
+    }
+  }
+  if (forExport) svg += `  </g>\n`;
+  else svg += `</g>`;
+
+  // Guides (vertical + horizontal lines marking each module edge)
+  if (withGuides && forExport) {
+    svg += `  <g id="guides" inkscape:groupmode="layer" inkscape:label="Guides" stroke="#FF00CC" stroke-width="${strokeW * 0.4}" stroke-opacity="0.4" fill="none">\n`;
+    for (let c = 0; c <= cols; c++) {
+      const x = margins + c * (modW + gutter);
+      svg += `    <line x1="${x.toFixed(4)}" y1="0" x2="${x.toFixed(4)}" y2="${docH}"/>\n`;
+      if (c < cols) {
+        const x2 = x + modW;
+        svg += `    <line x1="${x2.toFixed(4)}" y1="0" x2="${x2.toFixed(4)}" y2="${docH}"/>\n`;
+      }
+    }
+    for (let r = 0; r <= rows; r++) {
+      const y = margins + r * (modH + gutter);
+      svg += `    <line x1="0" y1="${y.toFixed(4)}" x2="${docW}" y2="${y.toFixed(4)}"/>\n`;
+      if (r < rows) {
+        const y2 = y + modH;
+        svg += `    <line x1="0" y1="${y2.toFixed(4)}" x2="${docW}" y2="${y2.toFixed(4)}"/>\n`;
+      }
+    }
+    svg += `  </g>\n`;
+  }
+
+  // Numbers
+  if (withNumbers && forExport) {
+    svg += `  <g id="numbers" inkscape:groupmode="layer" inkscape:label="Numbers" font-family="monospace" font-size="${modH * 0.18}" fill="#00A0FF" opacity="0.5">\n`;
+    let n = 1;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = margins + c * (modW + gutter) + modW * 0.5;
+        const y = margins + r * (modH + gutter) + modH * 0.5 + modH * 0.06;
+        svg += `    <text x="${x.toFixed(4)}" y="${y.toFixed(4)}" text-anchor="middle">${String(n).padStart(2,'0')}</text>\n`;
+        n++;
+      }
+    }
+    svg += `  </g>\n`;
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+// -------------------------------------------------------------- //
+// Render preview                                                   //
+// -------------------------------------------------------------- //
+function renderPreview() {
+  const wrap = $("preview").parentElement;
+  const maxW = wrap.clientWidth - 64;
+  const maxH = wrap.clientHeight - 64;
+  const ratio = state.docW / state.docH;
+  let w, h;
+  if (maxW / maxH > ratio) {
+    h = maxH; w = h * ratio;
+  } else {
+    w = maxW; h = w / ratio;
+  }
+  const preview = $("preview");
+  preview.setAttribute("width", w);
+  preview.setAttribute("height", h);
+  preview.setAttribute("viewBox", `0 0 ${state.docW} ${state.docH}`);
+  preview.innerHTML = buildSVG({ forExport: false }).replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "");
+}
+
+// -------------------------------------------------------------- //
+// Update stats + alert                                             //
+// -------------------------------------------------------------- //
+function updateStats() {
+  const geom = computeGrid();
+  const alertEl = $("alert");
+  alertEl.className = "canvas-top__alert"; // reset
+
+  if (!geom) {
+    $("stat-w").textContent = "—";
+    $("stat-h").textContent = "—";
+    $("stat-r").textContent = "—";
+    $("stat-t").textContent = "—";
+    alertEl.classList.add("alert--error");
+    alertEl.textContent = t("errorMargins");
+    return;
+  }
+
+  const { modW, modH } = geom;
+  const ratio = modW / modH;
+  const u = state.unit;
+  $("stat-w").textContent = `${modW.toFixed(2)} ${u}`;
+  $("stat-h").textContent = `${modH.toFixed(2)} ${u}`;
+  $("stat-r").textContent = ratio.toFixed(3);
+  $("stat-t").textContent = state.cols * state.rows;
+
+  if (ratio > 1.1) {
+    alertEl.classList.add("alert--horizontal");
+    alertEl.textContent = t("horizAlert");
+  } else if (ratio < 0.9) {
+    alertEl.classList.add("alert--vertical");
+    alertEl.textContent = t("vertOptimal");
+  } else {
+    alertEl.classList.add("alert--square");
+    alertEl.textContent = t("squareOptimal");
+  }
+}
+
+// -------------------------------------------------------------- //
+// Update header doc info                                           //
+// -------------------------------------------------------------- //
+function updateHeaderInfo() {
+  // Detect format
+  let formatName = "";
+  for (const [k, v] of Object.entries(FORMATS)) {
+    if (Math.abs(v.w - state.docW) < 0.01 && Math.abs(v.h - state.docH) < 0.01 && v.unit === state.unit) {
+      formatName = k.toUpperCase() + " · ";
+      break;
+    }
+  }
+  $("header-doc-info").textContent = `${formatName}${state.docW} × ${state.docH} ${state.unit.toUpperCase()}`;
+}
+
+// -------------------------------------------------------------- //
+// Full update                                                      //
+// -------------------------------------------------------------- //
+function update() {
+  renderPreview();
+  updateStats();
+  updateHeaderInfo();
+}
+
+// -------------------------------------------------------------- //
+// Render preset gallery                                            //
+// -------------------------------------------------------------- //
+function renderPresets() {
+  const c = $("presets");
+  c.innerHTML = "";
+  PRESETS.forEach(p => {
+    const btn = document.createElement("button");
+    btn.className = "preset";
+    btn.title = p[`tip_${currentLang}`];
+
+    const thumb = document.createElement("div");
+    thumb.className = "preset__thumb";
+    thumb.style.gridTemplateColumns = `repeat(${p.cols}, 1fr)`;
+    thumb.style.gridTemplateRows = `repeat(${p.rows}, 1fr)`;
+    for (let i = 0; i < p.cols * p.rows; i++) {
+      const cell = document.createElement("div");
+      cell.className = "preset__cell";
+      thumb.appendChild(cell);
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "preset__meta";
+    meta.innerHTML = `<span class="preset__name">${p.id}</span><span class="preset__dims">${p.cols}×${p.rows}</span>`;
+
+    btn.appendChild(thumb);
+    btn.appendChild(meta);
+    btn.onclick = () => applyPreset(p);
+    c.appendChild(btn);
+  });
+}
+
+function applyPreset(p) {
+  // Compute margin and gutter from ratios, scaled to the current document's
+  // minimum dimension. This keeps the preset's character (dramatic vs minimal
+  // margins) while ensuring the grid fits any document.
+  const minDim = Math.min(state.docW, state.docH);
+  const u = state.unit;
+
+  // Round to a natural increment per unit
+  const roundUnit = v => {
+    if (u === "pt" || u === "px") return Math.round(v);
+    if (u === "cm") return Math.round(v * 10) / 10;
+    if (u === "in") return Math.round(v * 20) / 20;
+    return Math.round(v * 2) / 2; // mm: 0.5 step
+  };
+
+  let margin = roundUnit(minDim * p.marginR);
+  let gutter = roundUnit(minDim * p.gutterR);
+
+  // Clamp to slider ranges
+  margin = clamp(margin, RANGES.margins.min, RANGES.margins.max);
+  gutter = clamp(gutter, RANGES.gutter.min, RANGES.gutter.max);
+
+  // Safety net: if for some edge-case doc the grid still doesn't fit,
+  // scale margin & gutter down proportionally until modules are positive.
+  const isValid = (m, g) => {
+    const modW = (state.docW - 2 * m - (p.cols - 1) * g) / p.cols;
+    const modH = (state.docH - 2 * m - (p.rows - 1) * g) / p.rows;
+    return modW > 0 && modH > 0;
+  };
+  let attempts = 0;
+  while (!isValid(margin, gutter) && attempts < 30) {
+    margin = roundUnit(margin * 0.8);
+    gutter = roundUnit(gutter * 0.8);
+    if (margin === 0 && gutter === 0) break;
+    attempts++;
+  }
+
+  state.cols = p.cols;
+  state.rows = p.rows;
+  state.margins = margin;
+  state.gutter = gutter;
+  // NOTE: we intentionally do NOT change the unit or document size.
+  // The user's working context is preserved; only the grid character is applied.
+  syncControlsFromState();
+  update();
+}
+
+// -------------------------------------------------------------- //
+// Bind controls                                                    //
+// -------------------------------------------------------------- //
+function bindSliderPair(sliderId, inputId, stateKey, range) {
+  const slider = $(sliderId);
+  const input = $(inputId);
+  slider.addEventListener("input", () => {
+    let v = parseFloat(slider.value);
+    if (range.int) v = Math.round(v);
+    state[stateKey] = v;
+    input.value = v;
+    update();
+  });
+  input.addEventListener("change", () => {
+    let v = parseFloat(input.value);
+    if (isNaN(v)) { input.value = slider.value; return; }
+    v = clamp(v, range.min, range.max);
+    if (range.int) v = Math.round(v);
+    state[stateKey] = v;
+    input.value = v;
+    slider.value = v;
+    update();
+  });
+}
+
+function bindDocSize() {
+  $("doc-w").addEventListener("change", () => {
+    const v = parseFloat($("doc-w").value);
+    if (!isNaN(v) && v > 0) { state.docW = v; setFormat("custom", false); update(); }
+  });
+  $("doc-h").addEventListener("change", () => {
+    const v = parseFloat($("doc-h").value);
+    if (!isNaN(v) && v > 0) { state.docH = v; setFormat("custom", false); update(); }
+  });
+  $("format").addEventListener("change", () => {
+    const f = $("format").value;
+    if (f === "custom") return;
+    const fmt = FORMATS[f];
+    state.docW = fmt.w; state.docH = fmt.h; state.unit = fmt.unit;
+    $("doc-w").value = fmt.w; $("doc-h").value = fmt.h; $("unit").value = fmt.unit;
+    update();
+  });
+  $("unit").addEventListener("change", () => {
+    state.unit = $("unit").value;
+    update();
+  });
+}
+
+function setFormat(value, updateState) {
+  $("format").value = value;
+}
+
+function syncControlsFromState() {
+  $("cols").value = state.cols; $("cols-val").value = state.cols;
+  $("rows").value = state.rows; $("rows-val").value = state.rows;
+  $("marg").value = state.margins; $("marg-val").value = state.margins;
+  $("gutt").value = state.gutter; $("gutt-val").value = state.gutter;
+  $("doc-w").value = state.docW; $("doc-h").value = state.docH;
+  $("unit").value = state.unit;
+}
+
+// -------------------------------------------------------------- //
+// Export                                                           //
+// -------------------------------------------------------------- //
+function getExportSVG() {
+  return buildSVG({
+    forExport: true,
+    withGuides: $("chk-guides").checked,
+    withMargins: $("chk-margins").checked,
+    withNumbers: $("chk-numbers").checked
+  });
+}
+
+function downloadSVG() {
+  const svg = getExportSVG();
+  const blob = new Blob([svg], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const name = `swiss-grid_${state.cols}x${state.rows}_${state.docW}x${state.docH}${state.unit}.svg`;
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(t("toastDownload"));
+}
+
+function copySVG() {
+  const svg = getExportSVG();
+  navigator.clipboard.writeText(svg).then(() => toast(t("toastCopied")));
+}
+
+function exportJSON() {
+  const data = {
+    docW: state.docW, docH: state.docH, unit: state.unit,
+    cols: state.cols, rows: state.rows,
+    margins: state.margins, gutter: state.gutter,
+    version: VERSION
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `swiss-grid-settings.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(t("toastExport"));
+}
+
+function importJSON(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      // Validate: must have expected keys with expected types
+      const validUnits = ["mm", "cm", "in", "pt", "px"];
+      if (typeof data.cols !== "number" || typeof data.rows !== "number" ||
+          typeof data.margins !== "number" || typeof data.gutter !== "number" ||
+          !validUnits.includes(data.unit)) {
+        throw new Error("Invalid JSON structure");
+      }
+      // Apply with clamping
+      state.cols = clamp(Math.round(data.cols), RANGES.cols.min, RANGES.cols.max);
+      state.rows = clamp(Math.round(data.rows), RANGES.rows.min, RANGES.rows.max);
+      state.margins = clamp(data.margins, RANGES.margins.min, RANGES.margins.max);
+      state.gutter = clamp(data.gutter, RANGES.gutter.min, RANGES.gutter.max);
+      state.unit = data.unit;
+      if (typeof data.docW === "number" && data.docW > 0) state.docW = data.docW;
+      if (typeof data.docH === "number" && data.docH > 0) state.docH = data.docH;
+      syncControlsFromState();
+      update();
+      toast(t("toastImport"));
+    } catch (err) {
+      toast(t("toastImportError"), true);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// -------------------------------------------------------------- //
+// Toast                                                            //
+// -------------------------------------------------------------- //
+let toastTimer;
+function toast(msg, isError = false) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.toggle("toast--error", isError);
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+// -------------------------------------------------------------- //
+// Language switching                                               //
+// -------------------------------------------------------------- //
+function setLang(lang) {
+  currentLang = lang;
+  $("lang-es").classList.toggle("active", lang === "es");
+  $("lang-en").classList.toggle("active", lang === "en");
+  document.documentElement.lang = lang;
+  // Update all elements with data-i18n
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    el.textContent = t(key);
+  });
+  renderPresets();
+  updateStats();
+}
+
+// -------------------------------------------------------------- //
+// Modal                                                            //
+// -------------------------------------------------------------- //
+function showAbout() {
+  $("modal-title").textContent = t("aboutTitle");
+  // Render newlines as <br> and 3dvic.com as a clickable link
+  const body = t("aboutBody")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace("3dvic.com", '<a href="https://3dvic.com" target="_blank" rel="noopener" style="color:var(--accent);border-bottom:1px solid var(--accent)">3dvic.com</a>')
+    .replace(/\n/g, "<br>");
+  $("modal-body").innerHTML = body;
+  $("modal").classList.add("show");
+}
+
+// -------------------------------------------------------------- //
+// Keyboard shortcuts                                               //
+// -------------------------------------------------------------- //
+window.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    e.preventDefault();
+    downloadSVG();
+  }
+  if (e.key === "Escape") {
+    $("modal").classList.remove("show");
+  }
+});
+
+// -------------------------------------------------------------- //
+// Number input enhancement: custom steppers + scroll wheel         //
+// -------------------------------------------------------------- //
+function enhanceNumberInputs() {
+  const chevronUp = '<svg viewBox="0 0 8 5" width="8" height="5"><path d="M1 4L4 1L7 4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const chevronDown = '<svg viewBox="0 0 8 5" width="8" height="5"><path d="M1 1L4 4L7 1" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  document.querySelectorAll('input[type="number"]').forEach(input => {
+    if (input.dataset.enhanced) return;
+    input.dataset.enhanced = "true";
+
+    // Wrap input in stepper container
+    const wrap = document.createElement("span");
+    wrap.className = "num-wrap";
+    // Layout context detection
+    if (input.classList.contains("dim__input")) wrap.classList.add("num-wrap--block");
+    else if (input.classList.contains("field__value")) wrap.classList.add("num-wrap--auto");
+
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    // Build stepper
+    const stepper = document.createElement("span");
+    stepper.className = "num-stepper";
+
+    const mkBtn = (dir, svg) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "num-stepper__btn";
+      b.tabIndex = -1;
+      b.innerHTML = svg;
+      b.addEventListener("mousedown", e => e.preventDefault()); // don't steal focus from input
+      b.addEventListener("click", () => {
+        if (dir === "up") input.stepUp();
+        else input.stepDown();
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      return b;
+    };
+
+    stepper.appendChild(mkBtn("up", chevronUp));
+    stepper.appendChild(mkBtn("down", chevronDown));
+    wrap.appendChild(stepper);
+
+    // Scroll wheel support: when input is focused, scrolling increments/decrements
+    input.addEventListener("wheel", e => {
+      if (document.activeElement !== input) return;
+      e.preventDefault();
+      if (e.deltaY < 0) input.stepUp();
+      else input.stepDown();
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }, { passive: false });
+  });
+}
+
+// -------------------------------------------------------------- //
+// Init                                                             //
+// -------------------------------------------------------------- //
+function init() {
+  bindSliderPair("cols", "cols-val", "cols", RANGES.cols);
+  bindSliderPair("rows", "rows-val", "rows", RANGES.rows);
+  bindSliderPair("marg", "marg-val", "margins", RANGES.margins);
+  bindSliderPair("gutt", "gutt-val", "gutter", RANGES.gutter);
+  bindDocSize();
+
+  $("lang-es").onclick = () => setLang("es");
+  $("lang-en").onclick = () => setLang("en");
+  $("btn-about").onclick = showAbout;
+  $("modal-close").onclick = () => $("modal").classList.remove("show");
+  $("modal").onclick = e => { if (e.target.id === "modal") $("modal").classList.remove("show"); };
+  $("btn-download").onclick = downloadSVG;
+  $("btn-svg-clip").onclick = copySVG;
+  $("btn-export").onclick = exportJSON;
+  $("btn-import").onclick = () => $("file-input").click();
+  $("file-input").onchange = e => { if (e.target.files[0]) importJSON(e.target.files[0]); };
+
+  // Output toggles re-render preview margins
+  $("chk-margins").addEventListener("change", () => {/* preview margin always shown; only affects export */});
+
+  renderPresets();
+  enhanceNumberInputs();
+  setLang("es");
+  update();
+
+  // Re-render on resize
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderPreview, 80);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+
+</body>
+</html>
