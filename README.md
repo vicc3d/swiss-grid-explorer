@@ -4,7 +4,7 @@ Parametric grid generator for structural layout design, inspired by the Swiss / 
 
 Available as a **web app**, an **Adobe Illustrator script**, and an **Affinity script** — same tool, three environments.
 
-**[→ Open web app](https://3dvic.com/tools/swiss-grid-explorer)** · **[Article & context](https://3dvic.com/work/swiss-grid-explorer)**
+**[→ Open web app](https://3dvic.com/apps/swiss-grid-explorer)** · **[Article & context](https://3dvic.com/work/swiss-grid-explorer)**
 
 ---
 
