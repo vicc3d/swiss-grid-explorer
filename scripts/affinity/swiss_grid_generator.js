@@ -1,23 +1,11 @@
-// ============================================================================
-// Swiss Grid Explorer v1.1
-// Affinity Script (Designer / Publisher / Photo)
-//
-// Parametric Swiss / International Typographic Style grid generator.
-// Concept, UX/UI & Design: Victor Crespo · Engineering: AI-assisted
-// 3dvic.com · MIT License
-//
-// Installation: use Affinity Script Manager or ask your AI assistant
-// (Claude) to push this file via the Affinity MCP bridge.
-// ============================================================================
-
 'use strict';
-
-const VERSION = "v1.1";
 
 const { Document } = require('/document');
 const { Dialog, DialogResult } = require('/dialog');
 const { UnitType } = require('/units');
 const { DocumentCommand, CompoundCommandBuilder } = require('/commands');
+
+const VERSION = 'v1.1';
 
 const doc = Document.current;
 if (!doc) {
@@ -31,22 +19,22 @@ if (!doc) {
   const mmToPx = conv.getConversionFactor(UnitType.Millimetre, UnitType.Pixel);
   const pxToMm = 1 / mmToPx;
 
-  console.log('[Swiss Grid] ' + VERSION + ' · Doc: ' + (W*pxToMm).toFixed(1) + 'x' + (H*pxToMm).toFixed(1) + ' mm @ ' + dpi + 'dpi');
+  console.log('[Swiss Grid] Doc: ' + (W*pxToMm).toFixed(1) + 'x' + (H*pxToMm).toFixed(1) + ' mm @ ' + dpi + 'dpi');
 
   const PRESETS = [
     null,
-    { cols: 8,  rows: 8,  marginR: 0.057, gutterR: 0.019 }, // Brockmann
-    { cols: 6,  rows: 6,  marginR: 0.048, gutterR: 0.024 }, // Gerstner
-    { cols: 3,  rows: 4,  marginR: 0.086, gutterR: 0.029 }, // Vignelli
-    { cols: 2,  rows: 3,  marginR: 0.119, gutterR: 0.038 }, // Tschichold
-    { cols: 12, rows: 1,  marginR: 0.067, gutterR: 0.022 }, // Digital 12
-    { cols: 4,  rows: 3,  marginR: 0.083, gutterR: 0.033 }, // Slides
+    { cols: 8,  rows: 8,  marginR: 0.057, gutterR: 0.019 },
+    { cols: 6,  rows: 6,  marginR: 0.048, gutterR: 0.024 },
+    { cols: 3,  rows: 4,  marginR: 0.086, gutterR: 0.029 },
+    { cols: 2,  rows: 3,  marginR: 0.119, gutterR: 0.038 },
+    { cols: 12, rows: 1,  marginR: 0.067, gutterR: 0.022 },
+    { cols: 4,  rows: 3,  marginR: 0.083, gutterR: 0.033 },
   ];
 
   const COL_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 24, 32];
   const ROW_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32];
 
-  const dlg = Dialog.create('Swiss Grid Generator');
+  const dlg = Dialog.create('Swiss Grid Explorer ' + VERSION);
   dlg.initialWidth = 420;
 
   const col1 = dlg.addColumn();
@@ -75,7 +63,7 @@ if (!doc) {
     'Vignelli   3x4',
     'Tschichold 2x3',
     'Digital 12',
-    'Slides     4x3',
+    'Slides 4x3',
   ], 0);
 
   const grpInfo   = col2.addGroup('Modulo calculado');
