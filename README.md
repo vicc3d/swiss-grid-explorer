@@ -14,7 +14,8 @@ Available as a **web app**, an **Adobe Illustrator script**, and an **Affinity s
 |---|---|---|
 | Web | `index.html` | Any browser — no install |
 | Adobe Illustrator | `scripts/illustrator/swiss_grid_explorer.jsx` | Illustrator CC or later |
-| Affinity | `scripts/affinity/swiss_grid_generator.js` | Affinity (April 2026+) with MCP |
+| Affinity (English) | `scripts/affinity/swiss_grid_generator_en.js` | Affinity (April 2026+) with MCP |
+| Affinity (Español) | `scripts/affinity/swiss_grid_generator_es.js` | Affinity (April 2026+) with MCP |
 
 ---
 
@@ -62,12 +63,16 @@ Restart Illustrator, then: **File → Scripts → swiss_grid_explorer**
 
 ## Affinity Script
 
+Two versions available — same functionality, different interface language.
+
 ### Install
 
 1. Open Affinity (Designer, Publisher, or Photo — April 2026 or later)
 2. Enable MCP: **Settings → General → AI / MCP**
 3. In the Scripts panel (**Window → General → Scripts**), create at least one category
-4. Ask your AI assistant (Claude) to push the script via the MCP bridge
+4. Ask your AI assistant (Claude) to push the script via the MCP bridge:
+   - English version: `swiss_grid_generator_en.js`
+   - Spanish version: `swiss_grid_generator_es.js`
 
 **Features:**
 - Native Affinity dialog with live guide preview
@@ -119,14 +124,15 @@ The exported SVG uses named `<g>` groups for cross-app compatibility:
 
 ```
 swiss-grid-explorer/
-├── index.html                                   ← Web app
+├── index.html                                    ← Web app
 ├── README.md
 ├── LICENSE
 └── scripts/
     ├── illustrator/
-    │   └── swiss_grid_explorer.jsx              ← Illustrator script (v1.1)
+    │   └── swiss_grid_explorer.jsx               ← Illustrator script (v1.1)
     └── affinity/
-        └── swiss_grid_generator.js             ← Affinity script (v1.1)
+        ├── swiss_grid_generator_en.js            ← Affinity script — English (v1.1)
+        └── swiss_grid_generator_es.js            ← Affinity script — Español (v1.1)
 ```
 
 ---
