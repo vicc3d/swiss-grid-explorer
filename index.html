@@ -959,7 +959,9 @@ const i18n = {
     toastDownload: "SVG descargado",
     toastImport: "Ajustes importados correctamente",
     toastImportError: "Error al leer el archivo JSON",
-    toastExport: "Ajustes exportados"
+    toastExport: "Ajustes exportados",
+    unitMM: "MM · milímetros", unitCM: "CM · centímetros",
+    unitIN: "IN · pulgadas",   unitPT: "PT · puntos", unitPX: "PX · píxeles"
   },
   en: {
     about: "About", document: "Document", format: "Format",
@@ -982,7 +984,9 @@ const i18n = {
     toastDownload: "SVG downloaded",
     toastImport: "Settings imported successfully",
     toastImportError: "Error reading JSON file",
-    toastExport: "Settings exported"
+    toastExport: "Settings exported",
+    unitMM: "MM · millimeters", unitCM: "CM · centimeters",
+    unitIN: "IN · inches",      unitPT: "PT · points", unitPX: "PX · pixels"
   }
 };
 let currentLang = "es";
@@ -1529,6 +1533,12 @@ function setLang(lang) {
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
     el.textContent = t(key);
+  });
+  // Update unit selector options (hardcoded HTML, not covered by data-i18n)
+  const unitMap = { mm: "unitMM", cm: "unitCM", in: "unitIN", pt: "unitPT", px: "unitPX" };
+  document.querySelectorAll("#unit option").forEach(opt => {
+    const key = unitMap[opt.value];
+    if (key) opt.textContent = t(key);
   });
   renderPresets();
   updateStats();
