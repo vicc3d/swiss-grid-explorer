@@ -9,7 +9,7 @@ const VERSION = 'v1.1';
 
 const doc = Document.current;
 if (!doc) {
-  console.log('[Swiss Grid] No hay documento abierto.');
+  console.log('[Swiss Grid] No document open.');
 } else {
 
   const dpi    = doc.dpi;
@@ -42,22 +42,22 @@ if (!doc) {
   const col2 = dlg.addColumn();
   col2.widthProportion = 1;
 
-  const grpGrid   = col1.addGroup('Reticula');
-  const colsCombo = grpGrid.addComboBox('Columnas', COL_OPTIONS.map(String), COL_OPTIONS.indexOf(8));
-  const rowsCombo = grpGrid.addComboBox('Filas',    ROW_OPTIONS.map(String), ROW_OPTIONS.indexOf(8));
-  const margEdit  = grpGrid.addUnitValueEditor('Margenes', UnitType.Pixel, UnitType.Millimetre, 12 * mmToPx, 0, null);
-  const guttEdit  = grpGrid.addUnitValueEditor('Medianil', UnitType.Pixel, UnitType.Millimetre,  4 * mmToPx, 0, null);
+  const grpGrid   = col1.addGroup('Grid');
+  const colsCombo = grpGrid.addComboBox('Columns', COL_OPTIONS.map(String), COL_OPTIONS.indexOf(8));
+  const rowsCombo = grpGrid.addComboBox('Rows',    ROW_OPTIONS.map(String), ROW_OPTIONS.indexOf(8));
+  const margEdit  = grpGrid.addUnitValueEditor('Margins', UnitType.Pixel, UnitType.Millimetre, 12 * mmToPx, 0, null);
+  const guttEdit  = grpGrid.addUnitValueEditor('Gutter',  UnitType.Pixel, UnitType.Millimetre,  4 * mmToPx, 0, null);
 
-  const grpOpts  = col1.addGroup('Generar');
-  const chkOuter = grpOpts.addCheckBox('Margenes exteriores', true);
-  const chkInner = grpOpts.addCheckBox('Guias interiores',    true);
-  const chkBase  = grpOpts.addCheckBox('Reticula base',       false);
-  const baseEdit = grpOpts.addUnitValueEditor('Espaciado base', UnitType.Pixel, UnitType.Millimetre, 5 * mmToPx, 0.5 * mmToPx, null);
+  const grpOpts  = col1.addGroup('Generate');
+  const chkOuter = grpOpts.addCheckBox('Outer margins', true);
+  const chkInner = grpOpts.addCheckBox('Inner guides',  true);
+  const chkBase  = grpOpts.addCheckBox('Baseline grid', false);
+  const baseEdit = grpOpts.addUnitValueEditor('Baseline spacing', UnitType.Pixel, UnitType.Millimetre, 5 * mmToPx, 0.5 * mmToPx, null);
   baseEdit.isEnabled = false;
 
-  const grpPresets  = col2.addGroup('Presets Iconicas');
+  const grpPresets  = col2.addGroup('Iconic Presets');
   const presetCombo = grpPresets.addComboBox('Preset', [
-    '- ninguno -',
+    '- none -',
     'Brockmann  8x8',
     'Gerstner   6x6',
     'Vignelli   3x4',
@@ -66,10 +66,10 @@ if (!doc) {
     'Slides 4x3',
   ], 0);
 
-  const grpInfo   = col2.addGroup('Modulo calculado');
-  const infoSize  = grpInfo.addStaticText('Tamano',     '-');
-  const infoRatio = grpInfo.addStaticText('Proporcion', '-');
-  const infoCnt   = grpInfo.addStaticText('Total',      '-');
+  const grpInfo   = col2.addGroup('Calculated module');
+  const infoSize  = grpInfo.addStaticText('Size',  '-');
+  const infoRatio = grpInfo.addStaticText('Ratio', '-');
+  const infoCnt   = grpInfo.addStaticText('Total', '-');
 
   function getCols() { return COL_OPTIONS[colsCombo.selectedIndex]; }
   function getRows() { return ROW_OPTIONS[rowsCombo.selectedIndex]; }
@@ -82,9 +82,9 @@ if (!doc) {
     if (modW > 0 && modH > 0) {
       infoSize.text  = (modW * pxToMm).toFixed(2) + ' x ' + (modH * pxToMm).toFixed(2) + ' mm';
       infoRatio.text = (modW / modH).toFixed(3);
-      infoCnt.text   = (cols * rows) + ' modulos';
+      infoCnt.text   = (cols * rows) + ' modules';
     } else {
-      infoSize.text  = 'Margenes excesivos';
+      infoSize.text  = 'Margins too large';
       infoRatio.text = '-';
       infoCnt.text   = '-';
     }
@@ -189,11 +189,11 @@ if (!doc) {
       const m = margEdit.value, g = guttEdit.value;
       const modW = ((W - 2*m - (cols-1)*g) / cols * pxToMm).toFixed(2);
       const modH = ((H - 2*m - (rows-1)*g) / rows * pxToMm).toFixed(2);
-      console.log('[Swiss Grid] OK ' + cmds.length + ' guias | ' + cols + 'x' + rows + ' | modulo ' + modW + 'x' + modH + ' mm');
+      console.log('[Swiss Grid] OK ' + cmds.length + ' guides | ' + cols + 'x' + rows + ' | module ' + modW + 'x' + modH + ' mm');
     }
   } else {
     doc.clearPreviews();
-    console.log('[Swiss Grid] Cancelado.');
+    console.log('[Swiss Grid] Cancelled.');
   }
 
 }
