@@ -77,6 +77,7 @@ Two versions available — same functionality, different interface language.
 **Features:**
 - Native Affinity dialog with live guide preview
 - Auto-detects document dimensions and DPI
+- Generates native guides directly on the document (no layers or vector objects)
 - 6 iconic presets that adapt proportionally to any page size
 - Single undo step for the entire grid (`CompoundCommandBuilder`)
 - Optional baseline grid
