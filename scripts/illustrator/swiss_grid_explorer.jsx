@@ -11,8 +11,10 @@ if (app.documents.length === 0) {
     var oldCoordinateSystem = app.coordinateSystem;
     app.coordinateSystem = CoordinateSystem.ARTBOARDCOORDINATESYSTEM;
 
-    var activeAB = doc.artboards[doc.artboards.getActiveArtboardIndex()];
+    var activeABIndex = doc.artboards.getActiveArtboardIndex();
+    var activeAB = doc.artboards[activeABIndex];
     var bounds = activeAB.artboardRect;
+    var abTag = "AB" + (activeABIndex + 1);
 
     var docLeft = bounds[0]; var docTop = bounds[1];
     var docRight = bounds[2]; var docBottom = bounds[3];
@@ -399,7 +401,7 @@ if (app.documents.length === 0) {
         var gW = docWidthPts - (m_pts * 2); var gH = docHeightPts - (m_pts * 2);
         var cW = (gW - (g_pts * (state.cols - 1))) / state.cols; var rH = (gH - (g_pts * (state.rows - 1))) / state.rows;
 
-        var gridLayerName = t("layerGrid") + " (" + state.cols + "x" + state.rows + ")";
+        var gridLayerName = t("layerGrid") + " (" + abTag + ", " + state.cols + "x" + state.rows + ")";
         var gridLayer = getOrCreateLayer(gridLayerName);
 
         var col;
@@ -416,21 +418,26 @@ if (app.documents.length === 0) {
         gridLayer.locked = true;
 
         if (chkGuides.value) {
-            var guidesLayer = getOrCreateLayer(t("layerGuides"));
-            for (var c = 0; c <= state.cols; c++) {
+            var guidesLayer = getOrCreateLayer(t("layerGuides") + " (" + abTag + ")");
+            for (var c = 0; c < state.cols; c++) {
                 var x = docLeft + m_pts + (c * (cW + g_pts));
                 var l1 = guidesLayer.pathItems.add(); l1.setEntirePath([[x, docTop], [x, docBottom]]); l1.guides = true;
-                if (c < state.cols) { var x2 = x + cW; var l2 = guidesLayer.pathItems.add(); l2.setEntirePath([[x2, docTop], [x2, docBottom]]); l2.guides = true; }
+                var x2 = x + cW; var l2 = guidesLayer.pathItems.add(); l2.setEntirePath([[x2, docTop], [x2, docBottom]]); l2.guides = true;
             }
-            for (var r = 0; r <= state.rows; r++) {
+            for (var r = 0; r < state.rows; r++) {
                 var y = docTop - m_pts - (r * (rH + g_pts));
                 var h1 = guidesLayer.pathItems.add(); h1.setEntirePath([[docLeft, y], [docRight, y]]); h1.guides = true;
-                if (r < state.rows) { var y2 = y - rH; var h2 = guidesLayer.pathItems.add(); h2.setEntirePath([[docLeft, y2], [docRight, y2]]); h2.guides = true; }
+                var y2 = y - rH; var h2 = guidesLayer.pathItems.add(); h2.setEntirePath([[docLeft, y2], [docRight, y2]]); h2.guides = true;
             }
             guidesLayer.locked = true;
         }
 
-        try { doc.layers.getByName(t("layerDesign")); } catch(e) { doc.layers.add().name = t("layerDesign"); }
+        var designLayer;
+        try { designLayer = doc.layers.getByName(t("layerDesign")); }
+        catch(e) { designLayer = doc.layers.add(); designLayer.name = t("layerDesign"); }
+        designLayer.zOrder(ZOrderMethod.BRINGTOFRONT);
+        designLayer.locked = false;
+        doc.activeLayer = designLayer;
         app.coordinateSystem = oldCoordinateSystem; app.redraw();
     }
 
