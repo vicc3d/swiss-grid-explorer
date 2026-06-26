@@ -1,11 +1,11 @@
 // ============================================================================
-// Swiss Grid Explorer (v1.1)
+// Swiss Grid Explorer (v1.2)
 // ============================================================================
 
 if (app.documents.length === 0) {
     alert("Error: Por favor, abre un documento primero.");
 } else {
-    var VERSION = "v1.1";
+    var VERSION = "v1.2";
     var doc = app.activeDocument;
     
     var oldCoordinateSystem = app.coordinateSystem;
@@ -38,6 +38,11 @@ if (app.documents.length === 0) {
             helpIOTitle: "Exportar / Importar",
             helpIOText: "Guarda tu configuración en un archivo JSON externo.",
             dialogSave: "Guardar Ajustes", dialogLoad: "Cargar Ajustes", errParse: "Error al leer el archivo JSON.",
+            scope: "Aplicar a:", scopeActive: "Mesa de trabajo activa", scopeAll: "Todas las mesas", scopeRange: "Rango...",
+            rangeLabel: "Rango:", rangeHint: "ej. 1-3, 5", proportional: "Escalar proporcionalmente por mesa",
+            helpScopeTitle: "Aplicar a varias mesas de trabajo",
+            helpScopeText: "Activa: solo la mesa actual.\nTodas: cada mesa del documento.\nRango: las mesas que indiques (ej. 1-3, 5).\n\nEscalar proporcionalmente: cada mesa recibe una retícula adaptada a su propio tamaño (márgenes y medianil en proporción). Si lo desactivas, se usan los mismos valores fijos en todas.",
+            errRange: "Rango no válido. Usá números, guiones y comas (ej. 1-3, 5).",
             btnAbout: "Acerca de...",
             aboutTitle: "Acerca de Swiss Grid Explorer",
             aboutText: "Swiss Grid Explorer " + VERSION + "\n\nUna herramienta de diseño paramétrico para la generación de retículas estructurales precisas en Adobe Illustrator.\n\nConcepto, UX/UI y Diseño: Victor Crespo www.3dvic.com\n2026 - Gracias por usarlo!."
@@ -57,6 +62,11 @@ if (app.documents.length === 0) {
             helpIOTitle: "Export / Import",
             helpIOText: "Save your configuration to an external JSON file.",
             dialogSave: "Save Settings", dialogLoad: "Load Settings", errParse: "Error reading JSON file.",
+            scope: "Apply to:", scopeActive: "Active artboard", scopeAll: "All artboards", scopeRange: "Range...",
+            rangeLabel: "Range:", rangeHint: "e.g. 1-3, 5", proportional: "Scale proportionally per artboard",
+            helpScopeTitle: "Apply to multiple artboards",
+            helpScopeText: "Active: only the current artboard.\nAll: every artboard in the document.\nRange: the artboards you specify (e.g. 1-3, 5).\n\nScale proportionally: each artboard gets a grid adapted to its own size (margins and gutter scaled). If you turn it off, the same fixed values are used on every artboard.",
+            errRange: "Invalid range. Use numbers, dashes and commas (e.g. 1-3, 5).",
             btnAbout: "About...",
             aboutTitle: "About Swiss Grid Explorer",
             aboutText: "Swiss Grid Explorer " + VERSION + "\n\nA parametric design tool for generating precise structural grids in Adobe Illustrator.\n\nConcept, UX/UI & Design: vic (www.3dvic.com)\nCode & Computational Logic: AI Assisted\n\n2026 - Thanks for using it!"
@@ -76,6 +86,46 @@ if (app.documents.length === 0) {
         gutter:  { min: 0, max: 80 }
     };
     function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+    // Parse an artboard range string like "1-3, 5" into 0-based indices, validated against count.
+    // Returns { ok: true, indices: [...] } or { ok: false }.
+    function parseArtboardRange(str, count) {
+        if (!str) return { ok: false };
+        var parts = String(str).split(",");
+        var set = {};
+        var out = [];
+        for (var i = 0; i < parts.length; i++) {
+            var p = parts[i].replace(/^\s+|\s+$/g, "");
+            if (p === "") continue;
+            var dash = p.indexOf("-");
+            if (dash >= 0) {
+                var a = parseInt(p.substring(0, dash), 10);
+                var b = parseInt(p.substring(dash + 1), 10);
+                if (isNaN(a) || isNaN(b)) return { ok: false };
+                if (a > b) { var tmp = a; a = b; b = tmp; }
+                for (var n = a; n <= b; n++) {
+                    if (n < 1 || n > count) return { ok: false };
+                    if (!set[n]) { set[n] = true; out.push(n - 1); }
+                }
+            } else {
+                var v = parseInt(p, 10);
+                if (isNaN(v) || v < 1 || v > count) return { ok: false };
+                if (!set[v]) { set[v] = true; out.push(v - 1); }
+            }
+        }
+        if (out.length === 0) return { ok: false };
+        return { ok: true, indices: out };
+    }
+
+    // Persisted preferences via app.preferences (survives across runs).
+    function prefGetInt(key, def) {
+        try { var v = app.preferences.getIntegerPreference(key); return v; } catch (e) { return def; }
+    }
+    function prefSetInt(key, val) { try { app.preferences.setIntegerPreference(key, val); } catch (e) {} }
+    function prefGetStr(key, def) {
+        try { var v = app.preferences.getStringPreference(key); return (v === undefined || v === null) ? def : v; } catch (e) { return def; }
+    }
+    function prefSetStr(key, val) { try { app.preferences.setStringPreference(key, val); } catch (e) {} }
 
     var state = { cols: 4, rows: 6, margins: 15, gutter: 5 };
     var builtInPresets = [
@@ -144,7 +194,7 @@ if (app.documents.length === 0) {
 
     // --- MAIN WINDOW ---
     var win = new Window("dialog", t("title"), undefined, {resizeable: true});
-    win.orientation = "column"; win.alignChildren = ["fill", "fill"]; win.minimumSize = [540, 740]; win.margins = 15; win.spacing = 10;
+    win.orientation = "column"; win.alignChildren = ["fill", "fill"]; win.minimumSize = [540, 820]; win.margins = 15; win.spacing = 10;
 
     var headerGroup = win.add("group"); headerGroup.alignment = ["fill", "top"]; headerGroup.orientation = "row"; headerGroup.alignChildren = ["fill", "center"];
     var controlsTopGroup = headerGroup.add("group"); controlsTopGroup.add("statictext", undefined, t("lang"));
@@ -292,12 +342,48 @@ if (app.documents.length === 0) {
         var lbl = g.add("statictext", undefined, ""); lbl.preferredSize.width = 80;
         var sld = g.add("slider", undefined, init, min, max); sld.alignment = ["fill", "center"];
         var txt = g.add("edittext", undefined, init); txt.characters = 4; txt.alignment = ["right", "center"];
-        return { label: lbl, slider: sld, text: txt };
+        var ctrl = { label: lbl, slider: sld, text: txt };
+        // Arrow Up/Down stepping (v1.2). Shift = step by 10.
+        txt.addEventListener("keydown", function(ev) {
+            if (ev.keyName === "Up" || ev.keyName === "Down") {
+                var step = ev.shiftKey ? 10 : 1;
+                var cur = Number(txt.text); if (isNaN(cur)) cur = sld.value;
+                cur = clamp(cur + (ev.keyName === "Up" ? step : -step), min, max);
+                txt.text = cur; sld.value = cur;
+                if (typeof updateUI === "function") updateUI();
+                ev.preventDefault();
+            }
+        });
+        return ctrl;
     }
     var ctrlCols = createSlider(controlsPanel, RANGES.cols.min, RANGES.cols.max, 4); var ctrlRows = createSlider(controlsPanel, RANGES.rows.min, RANGES.rows.max, 6);
     var ctrlMarg = createSlider(controlsPanel, RANGES.margins.min, RANGES.margins.max, 15); var ctrlGutt = createSlider(controlsPanel, RANGES.gutter.min, RANGES.gutter.max, 5);
 
     var optGroup = controlsPanel.add("group"); optGroup.alignment = ["fill", "center"]; var chkGuides = optGroup.add("checkbox", undefined, t("chkGuides")); chkGuides.value = true;
+
+    // --- ARTBOARD SCOPE (v1.2) ---
+    var abCount = doc.artboards.length;
+    var scopeGroup = controlsPanel.add("group"); scopeGroup.orientation = "row"; scopeGroup.alignment = ["fill", "center"]; scopeGroup.alignChildren = ["left", "center"]; scopeGroup.spacing = 6;
+    var lblScope = scopeGroup.add("statictext", undefined, t("scope"));
+    var dropScope = scopeGroup.add("dropdownlist", undefined, [t("scopeActive"), t("scopeAll"), t("scopeRange")]);
+    dropScope.selection = 0;
+    createHelpLink(scopeGroup, function() { showHelpDialog(t("helpScopeTitle"), t("helpScopeText")); });
+    var txtRange = scopeGroup.add("edittext", undefined, ""); txtRange.characters = 10; txtRange.helpTip = t("rangeHint"); txtRange.enabled = false;
+    var lblRangeHint = scopeGroup.add("statictext", undefined, "(" + t("rangeHint") + ")"); lblRangeHint.enabled = false;
+
+    var propGroup = controlsPanel.add("group"); propGroup.alignment = ["fill", "center"];
+    var chkProp = propGroup.add("checkbox", undefined, t("proportional")); chkProp.value = true; chkProp.enabled = false;
+
+    // Disable scope controls entirely if the document has a single artboard
+    if (abCount <= 1) { dropScope.enabled = false; lblScope.enabled = false; }
+
+    function updateScopeUI() {
+        var idx = dropScope.selection ? dropScope.selection.index : 0;
+        txtRange.enabled = (idx === 2);
+        lblRangeHint.enabled = (idx === 2);
+        chkProp.enabled = (idx === 1 || idx === 2);
+    }
+    dropScope.onChange = function() { updateScopeUI(); };
 
     var ioGroup = controlsPanel.add("group"); ioGroup.alignment = ["fill", "top"]; ioGroup.orientation = "row"; ioGroup.alignChildren = ["left", "center"]; ioGroup.spacing = 2;
     var lblIO = ioGroup.add("statictext", undefined, t("ioTitle"));
@@ -330,6 +416,12 @@ if (app.documents.length === 0) {
         ctrlCols.label.text = t("cols"); ctrlRows.label.text = t("rows"); ctrlMarg.label.text = t("margins"); ctrlGutt.label.text = t("gutter");
         btnCancel.text = t("cancel"); btnOk.text = t("apply"); lblGallery.text = t("galleryTitle"); canvasPanel.text = t("preview"); controlsPanel.text = t("settings");
         chkGuides.text = t("chkGuides"); chkGuides.helpTip = t("helpGuides"); lblAbout.text = t("btnAbout");
+        lblScope.text = t("scope"); chkProp.text = t("proportional");
+        txtRange.helpTip = t("rangeHint"); lblRangeHint.text = "(" + t("rangeHint") + ")";
+        var savedScopeIdx = dropScope.selection ? dropScope.selection.index : 0;
+        dropScope.removeAll();
+        dropScope.add("item", t("scopeActive")); dropScope.add("item", t("scopeAll")); dropScope.add("item", t("scopeRange"));
+        dropScope.selection = savedScopeIdx;
         for (var k = 0; k < presetUIButtons.length; k++) presetUIButtons[k].button.helpTip = presetUIButtons[k].presetData["tip_" + currentLang];
     }
 
@@ -393,16 +485,79 @@ if (app.documents.length === 0) {
     ctrlCols.text.onChange = function(){ syncTextToSlider(ctrlCols, RANGES.cols); }; ctrlRows.text.onChange = function(){ syncTextToSlider(ctrlRows, RANGES.rows); };
     ctrlMarg.text.onChange = function(){ syncTextToSlider(ctrlMarg, RANGES.margins); }; ctrlGutt.text.onChange = function(){ syncTextToSlider(ctrlGutt, RANGES.gutter); };
 
-    btnCancel.onClick = function() { app.coordinateSystem = oldCoordinateSystem; win.close(); }
+    btnCancel.onClick = function() { app.coordinateSystem = oldCoordinateSystem; win.close(); };
+
+    // Generate grid + guides for a single artboard (v1.2). Returns true if drawn, false if skipped.
+    function generateForArtboard(abIndex, useProportional, marginRatio, gutterRatio, mFixed, gFixed, col) {
+        doc.artboards.setActiveArtboardIndex(abIndex);
+        var b = doc.artboards[abIndex].artboardRect;
+        var L = b[0], T = b[1], R = b[2], B = b[3];
+        var W = Math.abs(R - L), H = Math.abs(T - B);
+        var minDim = Math.min(W, H);
+        var m = useProportional ? (marginRatio * minDim) : mFixed;
+        var g = useProportional ? (gutterRatio * minDim) : gFixed;
+
+        var gW = W - (m * 2), gH = H - (m * 2);
+        if (gW <= 0 || gH <= 0) return false; // margins too large for this artboard; skip it
+        var cW = (gW - (g * (state.cols - 1))) / state.cols;
+        var rH = (gH - (g * (state.rows - 1))) / state.rows;
+        if (cW <= 0 || rH <= 0) return false;
+
+        var tag = "AB" + (abIndex + 1);
+
+        var gridLayer = getOrCreateLayer(t("layerGrid") + " (" + tag + ", " + state.cols + "x" + state.rows + ")");
+        for (var r = 0; r < state.rows; r++) for (var c = 0; c < state.cols; c++) {
+            var rect = gridLayer.pathItems.rectangle(T - m - (r * (rH + g)), L + m + (c * (cW + g)), cW, rH);
+            rect.filled = false; rect.stroked = true; rect.strokeColor = col; rect.strokeWidth = 0.5;
+        }
+        gridLayer.locked = true;
+
+        if (chkGuides.value) {
+            var guidesLayer = getOrCreateLayer(t("layerGuides") + " (" + tag + ")");
+            for (var gc = 0; gc < state.cols; gc++) {
+                var x = L + m + (gc * (cW + g));
+                var l1 = guidesLayer.pathItems.add(); l1.setEntirePath([[x, T], [x, B]]); l1.guides = true;
+                var x2 = x + cW; var l2 = guidesLayer.pathItems.add(); l2.setEntirePath([[x2, T], [x2, B]]); l2.guides = true;
+            }
+            for (var gr = 0; gr < state.rows; gr++) {
+                var y = T - m - (gr * (rH + g));
+                var h1 = guidesLayer.pathItems.add(); h1.setEntirePath([[L, y], [R, y]]); h1.guides = true;
+                var y2 = y - rH; var h2 = guidesLayer.pathItems.add(); h2.setEntirePath([[L, y2], [R, y2]]); h2.guides = true;
+            }
+            guidesLayer.locked = true;
+        }
+        return true;
+    }
 
     btnOk.onClick = function() {
-        win.close();
-        var u = dropUnits.selection.text; var m_pts = toPts(state.margins, u); var g_pts = toPts(state.gutter, u);
-        var gW = docWidthPts - (m_pts * 2); var gH = docHeightPts - (m_pts * 2);
-        var cW = (gW - (g_pts * (state.cols - 1))) / state.cols; var rH = (gH - (g_pts * (state.rows - 1))) / state.rows;
+        var u = dropUnits.selection.text;
+        var m_pts = toPts(state.margins, u), g_pts = toPts(state.gutter, u);
 
-        var gridLayerName = t("layerGrid") + " (" + abTag + ", " + state.cols + "x" + state.rows + ")";
-        var gridLayer = getOrCreateLayer(gridLayerName);
+        // Determine target artboards from scope (validate range BEFORE closing the dialog)
+        var scopeIdx = dropScope.selection ? dropScope.selection.index : 0;
+        var targets;
+        if (scopeIdx === 0 || abCount <= 1) {
+            targets = [activeABIndex];
+        } else if (scopeIdx === 1) {
+            targets = []; for (var i = 0; i < abCount; i++) targets.push(i);
+        } else {
+            var parsed = parseArtboardRange(txtRange.text, abCount);
+            if (!parsed.ok) { alert(t("errRange")); return; } // keep dialog open on error
+            targets = parsed.indices;
+        }
+
+        // Persist all choices for next run (single delimited string for robustness)
+        prefSetStr("swissgrid_prefs",
+            state.cols + "|" + state.rows + "|" + state.margins + "|" + state.gutter + "|" +
+            u + "|" + scopeIdx + "|" + (chkProp.value ? 1 : 0) + "|" + txtRange.text);
+
+        win.close();
+
+        // Proportional ratios derived from the active artboard's dialog values
+        var minDimActive = Math.min(docWidthPts, docHeightPts);
+        var marginRatio = m_pts / minDimActive, gutterRatio = g_pts / minDimActive;
+        // Active scope never scales (uses exact dialog values); All/Range honor the checkbox
+        var doProp = (scopeIdx === 0) ? false : chkProp.value;
 
         var col;
         if (doc.documentColorSpace === DocumentColorSpace.CMYK) {
@@ -411,35 +566,47 @@ if (app.documents.length === 0) {
             col = new RGBColor(); col.red = 0; col.green = 150; col.blue = 255;
         }
 
-        for (var r = 0; r < state.rows; r++) for (var c = 0; c < state.cols; c++) {
-            var rect = gridLayer.pathItems.rectangle(docTop - m_pts - (r * (rH + g_pts)), docLeft + m_pts + (c * (cW + g_pts)), cW, rH);
-            rect.filled = false; rect.stroked = true; rect.strokeColor = col; rect.strokeWidth = 0.5;
+        for (var ti = 0; ti < targets.length; ti++) {
+            generateForArtboard(targets[ti], doProp, marginRatio, gutterRatio, m_pts, g_pts, col);
         }
-        gridLayer.locked = true;
 
-        if (chkGuides.value) {
-            var guidesLayer = getOrCreateLayer(t("layerGuides") + " (" + abTag + ")");
-            for (var c = 0; c < state.cols; c++) {
-                var x = docLeft + m_pts + (c * (cW + g_pts));
-                var l1 = guidesLayer.pathItems.add(); l1.setEntirePath([[x, docTop], [x, docBottom]]); l1.guides = true;
-                var x2 = x + cW; var l2 = guidesLayer.pathItems.add(); l2.setEntirePath([[x2, docTop], [x2, docBottom]]); l2.guides = true;
-            }
-            for (var r = 0; r < state.rows; r++) {
-                var y = docTop - m_pts - (r * (rH + g_pts));
-                var h1 = guidesLayer.pathItems.add(); h1.setEntirePath([[docLeft, y], [docRight, y]]); h1.guides = true;
-                var y2 = y - rH; var h2 = guidesLayer.pathItems.add(); h2.setEntirePath([[docLeft, y2], [docRight, y2]]); h2.guides = true;
-            }
-            guidesLayer.locked = true;
-        }
+        // Restore the originally active artboard
+        doc.artboards.setActiveArtboardIndex(activeABIndex);
 
         var designLayer;
         try { designLayer = doc.layers.getByName(t("layerDesign")); }
         catch(e) { designLayer = doc.layers.add(); designLayer.name = t("layerDesign"); }
-        designLayer.zOrder(ZOrderMethod.BRINGTOFRONT);
+        try { designLayer.move(doc, ElementPlacement.PLACEATBEGINNING); } catch(eMove) {}
         designLayer.locked = false;
         doc.activeLayer = designLayer;
         app.coordinateSystem = oldCoordinateSystem; app.redraw();
-    }
+    };
+    // Restore persisted choices from the previous run (v1.2)
+    ;(function () {
+      try {
+        var blob = prefGetStr("swissgrid_prefs", "");
+        if (!blob) return;
+        var p = blob.split("|");
+        if (p.length < 8) return;
+        var pc = parseInt(p[0], 10), pr = parseInt(p[1], 10);
+        var pm = Number(p[2]), pg = Number(p[3]);
+        var pu = p[4], psc = parseInt(p[5], 10), pp = parseInt(p[6], 10), prg = p[7];
+        if (pu) { for (var j = 0; j < unitNames.length; j++) { if (unitNames[j] === pu) { dropUnits.selection = j; break; } } }
+        if (!isNaN(pc)) { var vc = clamp(pc, RANGES.cols.min, RANGES.cols.max); ctrlCols.slider.value = vc; ctrlCols.text.text = vc; }
+        if (!isNaN(pr)) { var vr = clamp(pr, RANGES.rows.min, RANGES.rows.max); ctrlRows.slider.value = vr; ctrlRows.text.text = vr; }
+        if (!isNaN(pm)) { var vm = clamp(pm, RANGES.margins.min, RANGES.margins.max); ctrlMarg.slider.value = vm; ctrlMarg.text.text = vm; }
+        if (!isNaN(pg)) { var vg = clamp(pg, RANGES.gutter.min, RANGES.gutter.max); ctrlGutt.slider.value = vg; ctrlGutt.text.text = vg; }
+        if (abCount > 1) {
+            if (!isNaN(psc) && psc >= 0 && psc <= 2) dropScope.selection = psc;
+            chkProp.value = (pp === 1);
+            txtRange.text = prg || "";
+            updateScopeUI();
+        }
+      } catch (eRestore) {
+        // Corrupt or incompatible saved prefs: clear them and continue with defaults.
+        try { app.preferences.setStringPreference("swissgrid_prefs", ""); } catch (e2) {}
+      }
+    })();
 
     updateTextLabels(); updateUI(); win.show();
 }
