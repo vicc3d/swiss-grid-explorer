@@ -5,7 +5,9 @@ const { Dialog, DialogResult } = require('/dialog');
 const { UnitType } = require('/units');
 const { DocumentCommand, CompoundCommandBuilder } = require('/commands');
 
-const VERSION = 'v1.1';
+const VERSION = 'v1.2';
+
+const RATIO_VALUES = [1.618, 1.414, 1.5, 1.333, 1.25, 2];
 
 const doc = Document.current;
 if (!doc) {
@@ -54,6 +56,20 @@ if (!doc) {
   const chkBase  = grpOpts.addCheckBox('Retícula base',       false);
   const baseEdit = grpOpts.addUnitValueEditor('Espaciado base', UnitType.Pixel, UnitType.Millimetre, 5 * mmToPx, 0.5 * mmToPx, null);
   baseEdit.isEnabled = false;
+
+  const grpHarmonic  = col1.addGroup('Modo armónico');
+  const chkHarmonic  = grpHarmonic.addCheckBox('Vincular margen/medianil a una proporción', false);
+  const ratioCombo   = grpHarmonic.addComboBox('Proporción', [
+    'Phi - Áurea (1.618)',
+    'raíz de 2 (1.414)',
+    'Quinta - 3:2 (1.5)',
+    'Cuarta - 4:3 (1.333)',
+    'Tercera mayor - 5:4 (1.25)',
+    'Octava - 2:1 (2.0)',
+  ], 0);
+  ratioCombo.isEnabled = false;
+  const harmBaseEdit = grpHarmonic.addUnitValueEditor('Unidad base', UnitType.Pixel, UnitType.Millimetre, 8 * mmToPx, 0.5 * mmToPx, null);
+  harmBaseEdit.isEnabled = false;
 
   const grpPresets  = col2.addGroup('Presets icónicas');
   const presetCombo = grpPresets.addComboBox('Preset', [
@@ -126,7 +142,76 @@ if (!doc) {
     return cmds;
   }
 
+  // Deriva margen, medianil y (opcionalmente) el espaciado de la retícula base
+  // a partir de una unidad base y una proporción maestra: medianil = base,
+  // margen = base x proporción, retícula base = base / proporción. Misma
+  // lógica de escala modular que el modo armónico del web app.
+  // Guarda el margen/medianil de justo antes de activar el modo armónico,
+  // para poder restaurarlos al desactivarlo en vez de dejar los valores
+  // derivados de la proporción permanentemente.
+  let lastHarmonicOn = false;
+  let preHarmonicSnapshot = null;
+
+  function applyHarmonic() {
+    const on = chkHarmonic.value;
+
+    if (on && !lastHarmonicOn) {
+      preHarmonicSnapshot = { margin: margEdit.value, gutter: guttEdit.value };
+    } else if (!on && lastHarmonicOn) {
+      // Recién se desactivó. Si fue por aplicar un preset icónico (que trae
+      // su propio margen/medianil deliberado), ese valor gana -- no lo
+      // pisamos con la foto manual anterior.
+      if (preHarmonicSnapshot && !applyingPreset) {
+        const halfMm = 0.5 * mmToPx;
+        const cols = getCols(), rows = getRows();
+        const fits = (m, g) => (W - 2*m - (cols-1)*g)/cols > 0 && (H - 2*m - (rows-1)*g)/rows > 0;
+        let m = preHarmonicSnapshot.margin, g = preHarmonicSnapshot.gutter, attempts = 0;
+        // Cols/filas/tamaño pueden haber cambiado mientras estaba activo --
+        // revalidamos que los valores restaurados sigan entrando en la grilla.
+        while (!fits(m, g) && attempts < 30) {
+          m = Math.round(m * 0.8 / halfMm) * halfMm;
+          g = Math.max(halfMm, Math.round(g * 0.8 / halfMm) * halfMm);
+          attempts++;
+        }
+        margEdit.value = m;
+        guttEdit.value = g;
+      }
+      preHarmonicSnapshot = null;
+    }
+    lastHarmonicOn = on;
+
+    ratioCombo.isEnabled   = on;
+    harmBaseEdit.isEnabled = on;
+    margEdit.isEnabled = !on;
+    guttEdit.isEnabled = !on;
+    baseEdit.isEnabled = chkBase.value && !on;
+    if (!on) return;
+
+    const halfMm = 0.5 * mmToPx;
+    const cols = getCols(), rows = getRows();
+    const r = RATIO_VALUES[ratioCombo.selectedIndex];
+    const fits = (m, g) => (W - 2*m - (cols-1)*g)/cols > 0 && (H - 2*m - (rows-1)*g)/rows > 0;
+
+    let base = harmBaseEdit.value;
+    let m = Math.round((base * r) / halfMm) * halfMm;
+    let g = Math.max(halfMm, Math.round(base / halfMm) * halfMm);
+    let attempts = 0;
+    while (!fits(m, g) && attempts < 30) {
+      base *= 0.85;
+      m = Math.round((base * r) / halfMm) * halfMm;
+      g = Math.max(halfMm, Math.round(base / halfMm) * halfMm);
+      attempts++;
+    }
+
+    margEdit.value = m;
+    guttEdit.value = g;
+    if (chkBase.value) {
+      baseEdit.value = Math.max(halfMm, Math.round((base / r) / halfMm) * halfMm);
+    }
+  }
+
   function runPreview() {
+    applyHarmonic();
     doc.clearPreviews();
     const cmds = buildCmds();
     if (!cmds || cmds.length === 0) { updateInfo(); return; }
@@ -149,6 +234,9 @@ if (!doc) {
       m = Math.round(m * 0.8 / halfMm) * halfMm;
       g = Math.max(halfMm, Math.round(g * 0.8 / halfMm) * halfMm);
     }
+    // Un preset icónico es una elección manual y deliberada de margen/medianil,
+    // así que tiene prioridad sobre el modo armónico para esta corrida.
+    chkHarmonic.value = false;
     const ci = COL_OPTIONS.indexOf(p.cols);
     const ri = ROW_OPTIONS.indexOf(p.rows);
     if (ci >= 0) colsCombo.selectedIndex = ci;
@@ -160,7 +248,7 @@ if (!doc) {
   let applyingPreset = false;
 
   chkBase.onValueChangedHandler = () => {
-    baseEdit.isEnabled = chkBase.value;
+    baseEdit.isEnabled = chkBase.value && !chkHarmonic.value;
     runPreview();
   };
 
@@ -168,8 +256,8 @@ if (!doc) {
     if (presetCombo.selectedIndex === 0) return;
     applyingPreset = true;
     applyPreset(presetCombo.selectedIndex);
-    applyingPreset = false;
     runPreview();
+    applyingPreset = false;
   };
 
   dlg.onControlValueChangedHandler = () => {

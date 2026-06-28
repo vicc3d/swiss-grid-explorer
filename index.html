@@ -190,6 +190,14 @@
     text-transform: uppercase;
     color: var(--text-secondary);
   }
+  /* Section titles that control a specific colored element in the preview
+     (page outline, modules, baseline) pick up that same color -- ties the
+     control to the thing it's adjusting at a glance. Sections with no
+     single visual identity in the preview (Output, Iconic Grids, Settings)
+     stay on the neutral default above. */
+  .section__title--document { color: #b49dff; }
+  .section__title--grid { color: var(--accent); }
+  .section__title--harmonic { color: #FFB200; }
   .section__rule {
     flex: 1;
     height: 1px;
@@ -298,7 +306,7 @@
   /* Dimension input pair */
   .dim {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr auto;
     gap: 8px;
   }
   .dim__cell { display: flex; flex-direction: column; gap: 4px; }
@@ -325,6 +333,26 @@
     outline: none;
     border-color: var(--border-focus);
     background: var(--bg-input-focus);
+  }
+  .btn-swap {
+    width: 30px;
+    height: 30px;
+    margin-top: auto;
+    display: grid;
+    place-items: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-tertiary);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 150ms var(--ease);
+  }
+  .btn-swap:hover {
+    border-color: var(--border-focus);
+    color: var(--accent);
+    background: var(--bg-hover);
   }
 
   /* Hide native number-input spinners across browsers */
@@ -447,6 +475,97 @@
     letter-spacing: 0.05em;
   }
 
+  /* Saved custom layouts */
+  .layouts-divider {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--text-quaternary);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .layouts-divider::after { content: ""; flex: 1; height: 1px; background: var(--border-subtle); }
+  .layout-save-row { display: flex; gap: 6px; }
+  .layout-name-input {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-display);
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    min-width: 0;
+    transition: border-color 100ms var(--ease);
+  }
+  .layout-name-input:focus { outline: none; border-color: var(--border-focus); background: var(--bg-input-focus); }
+  .layout-list { display: flex; flex-direction: column; gap: 6px; }
+  .layout-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 8px 8px 8px 10px;
+    cursor: pointer;
+    transition: all 150ms var(--ease);
+  }
+  .layout-item:hover { border-color: var(--border-focus); background: var(--bg-hover); }
+  .layout-item__name {
+    font-size: 11px; font-weight: 500; color: var(--text-primary);
+    letter-spacing: -0.005em;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .layout-item__meta {
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--text-tertiary); letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .layout-item__delete {
+    background: none; border: none; color: var(--text-quaternary);
+    cursor: pointer; padding: 2px 4px; font-size: 15px; line-height: 1;
+    transition: color 150ms var(--ease);
+    flex-shrink: 0;
+  }
+  .layout-item__delete:hover { color: var(--error); }
+  .layout-empty-hint {
+    font-size: 10px; color: var(--text-quaternary); font-style: italic; margin: 0;
+  }
+
+  /* Harmonic scale calculator */
+  .scale-list {
+    display: flex; flex-direction: column; gap: 4px;
+    max-height: 280px; overflow-y: auto;
+  }
+  .scale-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .scale-row--base { border-color: #FFB200; background: rgba(255,178,0,0.12); }
+  .scale-row__step { color: var(--text-quaternary); width: 26px; flex-shrink: 0; }
+  .scale-row--base .scale-row__step { color: #FFB200; font-weight: 600; }
+  .scale-row__value {
+    flex: 1; text-align: right;
+    color: var(--text-primary); font-weight: 500;
+    font-feature-settings: "tnum";
+  }
+  .scale-row__copy {
+    background: none; border: none; color: var(--text-quaternary);
+    cursor: pointer; padding: 2px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 150ms var(--ease);
+    flex-shrink: 0;
+  }
+  .scale-row__copy:hover { color: var(--accent); }
+  .scale-hint {
+    font-size: 10px; line-height: 1.45; color: var(--text-quaternary); margin: 2px 0 0;
+  }
+
   /* Checkbox */
   .checkbox {
     display: flex; align-items: center; gap: 8px;
@@ -546,7 +665,8 @@
     font-family: var(--font-mono);
     font-size: 9px;
     letter-spacing: 0.15em;
-    color: var(--text-quaternary);
+    color: var(--accent);
+    opacity: 0.75;
     text-transform: uppercase;
   }
   .stat__value {
@@ -555,6 +675,26 @@
     font-weight: 500;
     color: var(--text-primary);
     font-feature-settings: "tnum";
+  }
+  .stat__input {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--border);
+    padding: 0 1px 1px;
+    width: 50px;
+    font-feature-settings: "tnum";
+    transition: border-color 150ms var(--ease);
+  }
+  .stat__input:hover { border-bottom-color: var(--border-focus); }
+  .stat__input:focus { outline: none; border-bottom-color: var(--accent); }
+  .stat__unit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
   }
 
   /* FOOTER ====================================================== */
@@ -687,6 +827,24 @@
   /* Hidden file input */
   .hidden-input { display: none; }
 
+  /* Generic visibility utility */
+  .is-hidden { display: none !important; }
+
+  /* Locked field (value derived from harmonic mode, not directly editable) */
+  .field--locked { opacity: 0.45; transition: opacity 150ms var(--ease); }
+  .field--locked input,
+  .field--locked .slider,
+  .field--locked .num-stepper { pointer-events: none; }
+
+  .harmonic-hint {
+    font-size: 10px;
+    line-height: 1.45;
+    color: var(--text-quaternary);
+    margin: 2px 0 0;
+  }
+
+  #harmonic-controls { display: flex; flex-direction: column; gap: 10px; }
+
   /* Toast */
   .toast {
     position: fixed;
@@ -735,14 +893,17 @@
 
       <div class="section">
         <div class="section__header">
-          <span class="section__num">01</span>
-          <span class="section__title" data-i18n="document">Documento</span>
+          <span class="section__num">1</span>
+          <span class="section__title section__title--document" data-i18n="document">Documento</span>
           <div class="section__rule"></div>
         </div>
         <div class="field">
           <span class="field__label" data-i18n="format">Formato</span>
           <select class="select" id="format">
             <option value="custom" data-i18n="custom">Personalizado</option>
+            <option value="a0">A0 · 841 × 1189 mm</option>
+            <option value="a1">A1 · 594 × 841 mm</option>
+            <option value="a2">A2 · 420 × 594 mm</option>
             <option value="a3">A3 · 297 × 420 mm</option>
             <option value="a4" selected>A4 · 210 × 297 mm</option>
             <option value="a5">A5 · 148 × 210 mm</option>
@@ -764,6 +925,7 @@
             <span class="dim__label" data-i18n="height">Alto</span>
             <input class="dim__input" id="doc-h" type="number" min="10" step="1" value="297">
           </div>
+          <button type="button" class="btn-swap" id="btn-swap-orientation" title="Intercambiar ancho/alto">&#8644;</button>
         </div>
         <div class="field">
           <span class="field__label" data-i18n="unit">Unidad</span>
@@ -779,8 +941,8 @@
 
       <div class="section">
         <div class="section__header">
-          <span class="section__num">02</span>
-          <span class="section__title" data-i18n="grid">Retícula</span>
+          <span class="section__num">2</span>
+          <span class="section__title section__title--grid" data-i18n="grid">Retícula</span>
           <div class="section__rule"></div>
         </div>
 
@@ -800,7 +962,7 @@
           <input class="slider" id="rows" type="range" min="1" max="32" value="6">
         </div>
 
-        <div class="field">
+        <div class="field" id="marg-field">
           <div class="field__row">
             <span class="field__label" data-i18n="margins">Márgenes</span>
             <input class="field__value" id="marg-val" type="number" min="0" max="200" step="0.5" value="15">
@@ -808,7 +970,7 @@
           <input class="slider" id="marg" type="range" min="0" max="200" step="0.5" value="15">
         </div>
 
-        <div class="field">
+        <div class="field" id="gutt-field">
           <div class="field__row">
             <span class="field__label" data-i18n="gutter">Medianil</span>
             <input class="field__value" id="gutt-val" type="number" min="0" max="80" step="0.5" value="5">
@@ -819,7 +981,122 @@
 
       <div class="section">
         <div class="section__header">
-          <span class="section__num">03</span>
+          <span class="section__num">3</span>
+          <span class="section__title section__title--harmonic" data-i18n="harmonic">Modo armónico</span>
+          <div class="section__rule"></div>
+        </div>
+
+        <label class="checkbox">
+          <input type="checkbox" id="chk-harmonic">
+          <span class="checkbox__box"></span>
+          <span class="checkbox__label" data-i18n="harmonicEnable">Vincular márgenes y medianil a una proporción</span>
+        </label>
+
+        <div id="harmonic-controls" class="is-hidden">
+          <div class="field">
+            <span class="field__label" data-i18n="harmonicRatioLabel">Proporción</span>
+            <select class="select" id="harmonic-ratio">
+              <option value="1.618" data-i18n="ratioPhi">Φ · Áurea (1.618)</option>
+              <option value="1.414" data-i18n="ratioSqrt2">√2 (1.414)</option>
+              <option value="1.5" data-i18n="ratioThreeTwo">Quinta · 3:2 (1.5)</option>
+              <option value="1.333" data-i18n="ratioFourThree">Cuarta · 4:3 (1.333)</option>
+              <option value="1.25" data-i18n="ratioFiveFour">Tercera mayor · 5:4 (1.25)</option>
+              <option value="2" data-i18n="ratioOctave">Octava · 2:1 (2.0)</option>
+              <option value="custom" data-i18n="custom">Personalizado</option>
+            </select>
+          </div>
+
+          <div class="field is-hidden" id="harmonic-custom-wrap">
+            <div class="field__row">
+              <span class="field__label" data-i18n="ratioCustom">Proporción personalizada</span>
+              <input class="field__value" id="harmonic-ratio-custom" type="number" min="1.01" max="4" step="0.001" value="1.618">
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field__row">
+              <span class="field__label" data-i18n="base">Unidad base</span>
+              <input class="field__value" id="base-val" type="number" min="1" max="50" step="0.5" value="8">
+            </div>
+            <input class="slider" id="base" type="range" min="1" max="50" step="0.5" value="8">
+          </div>
+
+          <div class="field field--locked" id="baseline-field">
+            <div class="field__row">
+              <span class="field__label" data-i18n="baselineLabel">Baseline</span>
+              <input class="field__value" id="baseline-val" type="number" readonly tabindex="-1" value="5">
+            </div>
+          </div>
+
+          <p class="harmonic-hint" data-i18n="harmonicHint">Margen y medianil quedan derivados de la unidad base y la proporción elegida. Desactivá el modo armónico para ajustarlos a mano.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section__header">
+          <span class="section__num">4</span>
+          <span class="section__title section__title--harmonic" data-i18n="scale">Escala armónica</span>
+          <div class="section__rule"></div>
+        </div>
+
+        <div class="field">
+          <span class="field__label" data-i18n="harmonicRatioLabel">Proporción</span>
+          <select class="select" id="scale-ratio">
+            <option value="1.618" data-i18n="ratioPhi">Φ · Áurea (1.618)</option>
+            <option value="1.414" data-i18n="ratioSqrt2">√2 (1.414)</option>
+            <option value="1.5" data-i18n="ratioThreeTwo">Quinta · 3:2 (1.5)</option>
+            <option value="1.333" data-i18n="ratioFourThree">Cuarta · 4:3 (1.333)</option>
+            <option value="1.25" data-i18n="ratioFiveFour">Tercera mayor · 5:4 (1.25)</option>
+            <option value="2" data-i18n="ratioOctave">Octava · 2:1 (2.0)</option>
+            <option value="custom" data-i18n="custom">Personalizado</option>
+          </select>
+        </div>
+
+        <div class="field is-hidden" id="scale-custom-wrap">
+          <div class="field__row">
+            <span class="field__label" data-i18n="ratioCustom">Proporción personalizada</span>
+            <input class="field__value" id="scale-ratio-custom" type="number" min="1.01" max="4" step="0.001" value="1.618">
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field__row">
+            <span class="field__label" data-i18n="scaleBase">Base</span>
+            <input class="field__value" id="scale-base" type="number" min="1" max="500" step="0.5" value="16">
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field__label" data-i18n="unit">Unidad</span>
+          <select class="select" id="scale-unit">
+            <option value="px">PX · píxeles</option>
+            <option value="pt">PT · puntos</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field__row">
+            <span class="field__label" data-i18n="scaleStepsDown">Pasos abajo</span>
+            <input class="field__value" id="scale-steps-down" type="number" min="0" max="6" step="1" value="2">
+          </div>
+        </div>
+        <div class="field">
+          <div class="field__row">
+            <span class="field__label" data-i18n="scaleStepsUp">Pasos arriba</span>
+            <input class="field__value" id="scale-steps-up" type="number" min="0" max="10" step="1" value="5">
+          </div>
+        </div>
+
+        <div class="scale-list" id="scale-list"></div>
+
+        <button class="btn" id="btn-copy-scale" style="width:100%; justify-content:center;" data-i18n="copyScale">Copiar escala</button>
+
+        <p class="scale-hint" data-i18n="scaleHint">Generá una escala de valores en esta proporción (tamaño de fuente, grosor de stroke, espaciado) y copiala para armar tus Text Styles o Graphic Styles en Affinity u otra app.</p>
+      </div>
+
+      <div class="section">
+        <div class="section__header">
+          <span class="section__num">5</span>
           <span class="section__title" data-i18n="output">Output</span>
           <div class="section__rule"></div>
         </div>
@@ -838,6 +1115,11 @@
           <span class="checkbox__box"></span>
           <span class="checkbox__label" data-i18n="numberModules">Numerar módulos</span>
         </label>
+        <label class="checkbox" id="baseline-toggle">
+          <input type="checkbox" id="chk-baseline">
+          <span class="checkbox__box"></span>
+          <span class="checkbox__label" data-i18n="showBaseline">Mostrar baseline</span>
+        </label>
       </div>
 
     </aside>
@@ -854,11 +1136,13 @@
       <div class="canvas-bottom">
         <div class="stat">
           <span class="stat__label" data-i18n="moduleW">Módulo W</span>
-          <span class="stat__value" id="stat-w">—</span>
+          <input class="stat__input" id="stat-w" type="number" step="0.01" data-i18n-title="moduleEditHint" title="Editar para recalcular el margen">
+          <span class="stat__unit" id="stat-w-unit"></span>
         </div>
         <div class="stat">
           <span class="stat__label" data-i18n="moduleH">Módulo H</span>
-          <span class="stat__value" id="stat-h">—</span>
+          <input class="stat__input" id="stat-h" type="number" step="0.01" data-i18n-title="moduleEditHint" title="Editar para recalcular el margen">
+          <span class="stat__unit" id="stat-h-unit"></span>
         </div>
         <div class="stat">
           <span class="stat__label" data-i18n="ratio">Proporción</span>
@@ -875,16 +1159,23 @@
     <aside class="rail rail--right">
       <div class="section">
         <div class="section__header">
-          <span class="section__num">04</span>
+          <span class="section__num">6</span>
           <span class="section__title" data-i18n="iconic">Retículas icónicas</span>
           <div class="section__rule"></div>
         </div>
         <div class="preset-grid" id="presets"></div>
+
+        <div class="layouts-divider" data-i18n="myLayouts">Mis layouts</div>
+        <div class="layout-save-row">
+          <input class="layout-name-input" id="layout-name" type="text" maxlength="40" data-i18n-placeholder="layoutNamePlaceholder" placeholder="Nombre del layout">
+          <button class="btn" id="btn-save-layout" data-i18n="saveLayout">Guardar</button>
+        </div>
+        <div class="layout-list" id="layout-list"></div>
       </div>
 
       <div class="section">
         <div class="section__header">
-          <span class="section__num">05</span>
+          <span class="section__num">7</span>
           <span class="section__title" data-i18n="settings">Ajustes</span>
           <div class="section__rule"></div>
         </div>
@@ -932,7 +1223,7 @@
 /* Concept, UX/UI & Design: Victor Crespo, 3dvic.com                */
 /* ============================================================== */
 
-const VERSION = "v1.1";
+const VERSION = "v1.2";
 
 // -------------------------------------------------------------- //
 // i18n                                                             //
@@ -944,6 +1235,15 @@ const i18n = {
     columns: "Columnas", rows: "Filas", margins: "Márgenes", gutter: "Medianil",
     output: "Output", genGuides: "Generar guías",
     genMargins: "Incluir margen", numberModules: "Numerar módulos",
+    harmonic: "Modo armónico",
+    harmonicEnable: "Vincular márgenes y medianil a una proporción",
+    harmonicRatioLabel: "Proporción", base: "Unidad base",
+    baselineLabel: "Baseline", showBaseline: "Mostrar baseline",
+    ratioPhi: "Φ · Áurea (1.618)", ratioSqrt2: "√2 (1.414)",
+    ratioThreeTwo: "Quinta · 3:2 (1.5)", ratioFourThree: "Cuarta · 4:3 (1.333)",
+    ratioFiveFour: "Tercera mayor · 5:4 (1.25)", ratioOctave: "Octava · 2:1 (2.0)",
+    ratioCustom: "Proporción personalizada",
+    harmonicHint: "Margen y medianil quedan derivados de la unidad base y la proporción elegida. Desactivá el modo armónico para ajustarlos a mano.",
     preview: "Previsualización", iconic: "Retículas icónicas",
     settings: "Ajustes", import: "Importar JSON", export: "Exportar JSON",
     copySvg: "Copiar SVG", downloadSvg: "Descargar SVG",
@@ -954,14 +1254,29 @@ const i18n = {
     squareOptimal: "Proporción cuadrada · Excelente",
     errorMargins: "Error · Márgenes excesivos",
     aboutTitle: "Acerca de Swiss Grid Explorer",
-    aboutBody: `Swiss Grid Explorer ${VERSION}\n\nUna herramienta de diseño paramétrico para la generación de retículas estructurales en formato SVG, compatible con Adobe Illustrator, Affinity Designer, Inkscape y editores web.\n\nLa retícula y las guías se exportan en grupos separados (<g>) con clases identificables, para que cada editor las reconozca como capas independientes.\n\n3dvic.com · MIT License`,
+    aboutBody: `Swiss Grid Explorer ${VERSION}\n\nUna herramienta de diseño paramétrico para la generación de retículas estructurales en formato SVG, compatible con Adobe Illustrator, Affinity Designer, Inkscape y editores web.\n\nLa retícula y las guías se exportan en grupos separados (<g>) con clases identificables, para que cada editor las reconozca como capas independientes.\n\nEl Modo armónico (Φ, √2, y otras proporciones) nace de una idea de Cron, de la comunidad de Affinity en Discord. Gracias por la propuesta.\n\n3dvic.com · MIT License`,
     toastCopied: "SVG copiado al portapapeles",
     toastDownload: "SVG descargado",
     toastImport: "Ajustes importados correctamente",
     toastImportError: "Error al leer el archivo JSON",
     toastExport: "Ajustes exportados",
+    myLayouts: "Mis layouts", layoutNamePlaceholder: "Nombre del layout",
+    saveLayout: "Guardar", layoutsEmpty: "Todavía no guardaste ningún layout.",
+    deleteLayout: "Eliminar layout",
+    moduleEditHint: "Editar para recalcular el margen",
+    toastLayoutNameRequired: "Escribí un nombre para el layout",
+    toastLayoutSaveError: "No se pudo guardar (localStorage no disponible)",
+    toastLayoutSaved: "Layout guardado", toastLayoutUpdated: "Layout actualizado",
+    toastLayoutApplied: "Layout aplicado", toastLayoutDeleted: "Layout eliminado",
+    toastModuleClamped: "Margen ajustado al límite posible",
+    scale: "Escala armónica", scaleBase: "Base",
+    scaleStepsDown: "Pasos abajo", scaleStepsUp: "Pasos arriba",
+    copyScale: "Copiar escala", copyShort: "copiar",
+    scaleHint: "Generá una escala de valores en esta proporción (tamaño de fuente, grosor de stroke, espaciado) y copiala para armar tus Text Styles o Graphic Styles en Affinity u otra app.",
+    toastScaleCopied: "Escala copiada",
     unitMM: "MM · milímetros", unitCM: "CM · centímetros",
-    unitIN: "IN · pulgadas",   unitPT: "PT · puntos", unitPX: "PX · píxeles"
+    unitIN: "IN · pulgadas",   unitPT: "PT · puntos", unitPX: "PX · píxeles",
+    swapOrientation: "Intercambiar ancho/alto"
   },
   en: {
     about: "About", document: "Document", format: "Format",
@@ -969,6 +1284,15 @@ const i18n = {
     columns: "Columns", rows: "Rows", margins: "Margins", gutter: "Gutter",
     output: "Output", genGuides: "Generate guides",
     genMargins: "Include margin", numberModules: "Number modules",
+    harmonic: "Harmonic mode",
+    harmonicEnable: "Link margin and gutter to a ratio",
+    harmonicRatioLabel: "Ratio", base: "Base unit",
+    baselineLabel: "Baseline", showBaseline: "Show baseline",
+    ratioPhi: "Φ · Golden (1.618)", ratioSqrt2: "√2 (1.414)",
+    ratioThreeTwo: "Fifth · 3:2 (1.5)", ratioFourThree: "Fourth · 4:3 (1.333)",
+    ratioFiveFour: "Major third · 5:4 (1.25)", ratioOctave: "Octave · 2:1 (2.0)",
+    ratioCustom: "Custom ratio",
+    harmonicHint: "Margin and gutter are derived from the base unit and the chosen ratio. Turn off harmonic mode to adjust them by hand.",
     preview: "Preview", iconic: "Iconic grids",
     settings: "Settings", import: "Import JSON", export: "Export JSON",
     copySvg: "Copy SVG", downloadSvg: "Download SVG",
@@ -979,14 +1303,29 @@ const i18n = {
     squareOptimal: "Square ratio · Excellent",
     errorMargins: "Error · Excessive margins",
     aboutTitle: "About Swiss Grid Explorer",
-    aboutBody: `Swiss Grid Explorer ${VERSION}\n\nA parametric design tool for generating structural grids as SVG files, compatible with Adobe Illustrator, Affinity Designer, Inkscape and web editors.\n\nThe grid and guides export in separate groups (<g>) with named classes, so each editor reads them as independent layers.\n\n3dvic.com · MIT License`,
+    aboutBody: `Swiss Grid Explorer ${VERSION}\n\nA parametric design tool for generating structural grids as SVG files, compatible with Adobe Illustrator, Affinity Designer, Inkscape and web editors.\n\nThe grid and guides export in separate groups (<g>) with named classes, so each editor reads them as independent layers.\n\nHarmonic Mode (Φ, √2, and other ratios) was sparked by an idea from Cron, from the Affinity Discord community. Thanks for the suggestion.\n\n3dvic.com · MIT License`,
     toastCopied: "SVG copied to clipboard",
     toastDownload: "SVG downloaded",
     toastImport: "Settings imported successfully",
     toastImportError: "Error reading JSON file",
     toastExport: "Settings exported",
+    myLayouts: "My layouts", layoutNamePlaceholder: "Layout name",
+    saveLayout: "Save", layoutsEmpty: "No saved layouts yet.",
+    deleteLayout: "Delete layout",
+    moduleEditHint: "Edit to recalculate the margin",
+    toastLayoutNameRequired: "Enter a name for the layout",
+    toastLayoutSaveError: "Couldn't save (localStorage unavailable)",
+    toastLayoutSaved: "Layout saved", toastLayoutUpdated: "Layout updated",
+    toastLayoutApplied: "Layout applied", toastLayoutDeleted: "Layout deleted",
+    toastModuleClamped: "Margin clamped to the closest possible value",
+    scale: "Harmonic scale", scaleBase: "Base",
+    scaleStepsDown: "Steps down", scaleStepsUp: "Steps up",
+    copyScale: "Copy scale", copyShort: "copy",
+    scaleHint: "Generate a scale of values in this ratio (font size, stroke weight, spacing) and copy it to build your Text Styles or Graphic Styles in Affinity or any other app.",
+    toastScaleCopied: "Scale copied",
     unitMM: "MM · millimeters", unitCM: "CM · centimeters",
-    unitIN: "IN · inches",      unitPT: "PT · points", unitPX: "PX · pixels"
+    unitIN: "IN · inches",      unitPT: "PT · points", unitPX: "PX · pixels",
+    swapOrientation: "Swap width/height"
   }
 };
 let currentLang = "es";
@@ -1026,6 +1365,9 @@ const PRESETS = [
 ];
 
 const FORMATS = {
+  a0: { w: 841, h: 1189, unit: "mm" },
+  a1: { w: 594, h: 841, unit: "mm" },
+  a2: { w: 420, h: 594, unit: "mm" },
   a3: { w: 297, h: 420, unit: "mm" },
   a4: { w: 210, h: 297, unit: "mm" },
   a5: { w: 148, h: 210, unit: "mm" },
@@ -1052,14 +1394,76 @@ const RANGES = {
   cols: { min: 1, max: 32, int: true },
   rows: { min: 1, max: 32, int: true },
   margins: { min: 0, max: 200, int: false },
-  gutter: { min: 0, max: 80, int: false }
+  gutter: { min: 0, max: 80, int: false },
+  base: { min: 1, max: 50, int: false }
 };
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
+// Round a value to a "natural" increment for the given unit (shared by
+// presets and harmonic mode so both rounding behaviors stay consistent).
+const roundUnit = (v, u) => {
+  if (u === "pt" || u === "px") return Math.round(v);
+  if (u === "cm") return Math.round(v * 10) / 10;
+  if (u === "in") return Math.round(v * 20) / 20;
+  return Math.round(v * 2) / 2; // mm: 0.5 step
+};
+
+// Ratios offered as presets in the harmonic-mode dropdown. Anything else
+// typed into the custom field is treated as "custom".
+const HARMONIC_RATIO_PRESETS = [1.618, 1.414, 1.5, 1.333, 1.25, 2];
+
 const state = {
   docW: 210, docH: 297, unit: "mm",
-  cols: 4, rows: 6, margins: 15, gutter: 5
+  cols: 4, rows: 6, margins: 15, gutter: 5,
+  harmonicMode: false, harmonicRatio: 1.618, harmonicBase: 8,
+  baseline: 5, showBaseline: false,
+  scaleRatio: 1.618, scaleBase: 16, scaleUnit: "px",
+  scaleStepsDown: 2, scaleStepsUp: 5
 };
+
+// Holds margin/gutter from just before harmonic mode was switched on, so
+// switching it back off can restore them. Deliberately NOT part of `state`:
+// it's transient editing memory, not something that belongs in exported
+// JSON or saved layouts.
+let preHarmonicSnapshot = null;
+
+// -------------------------------------------------------------- //
+// Harmonic mode                                                   //
+// -------------------------------------------------------------- //
+// Derives margin, gutter and baseline from a single base value and a
+// master ratio (Phi, sqrt(2), a musical interval, or a custom number),
+// the way a typographic modular scale derives a series of sizes from one
+// seed value. gutter = base (the smallest rhythm unit), margin = base
+// x ratio (the next step up), baseline = base / ratio (one step down,
+// a fine reference line spacing). Mirrors the v1 preset safety net: if
+// the resulting margin/gutter don't fit the document, scale the whole
+// series down until they do, rather than producing a broken grid.
+function computeHarmonic() {
+  if (!state.harmonicMode) return;
+  const u = state.unit;
+  const r = state.harmonicRatio;
+
+  const isValid = (m, g) => {
+    const modW = (state.docW - 2 * m - (state.cols - 1) * g) / state.cols;
+    const modH = (state.docH - 2 * m - (state.rows - 1) * g) / state.rows;
+    return modW > 0 && modH > 0;
+  };
+
+  let base = state.harmonicBase;
+  let margin = roundUnit(base * r, u);
+  let gutter = roundUnit(base, u);
+  let attempts = 0;
+  while (!isValid(margin, gutter) && attempts < 30) {
+    base *= 0.85;
+    margin = roundUnit(base * r, u);
+    gutter = roundUnit(base, u);
+    attempts++;
+  }
+
+  state.margins = clamp(margin, RANGES.margins.min, RANGES.margins.max);
+  state.gutter = clamp(gutter, RANGES.gutter.min, RANGES.gutter.max);
+  state.baseline = clamp(roundUnit(base / r, u), 0.5, RANGES.margins.max);
+}
 
 // -------------------------------------------------------------- //
 // DOM helpers                                                      //
@@ -1109,6 +1513,10 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
     svg += `      <sge:margins>${margins}</sge:margins>\n`;
     svg += `      <sge:gutter>${gutter}</sge:gutter>\n`;
     svg += `      <sge:unit>${unit}</sge:unit>\n`;
+    if (state.harmonicMode) {
+      svg += `      <sge:harmonicRatio>${state.harmonicRatio}</sge:harmonicRatio>\n`;
+      svg += `      <sge:baseline>${state.baseline}</sge:baseline>\n`;
+    }
     svg += `    </sge:settings>\n`;
     svg += `  </metadata>\n`;
   } else {
@@ -1122,7 +1530,7 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
     svg += `  </g>\n`;
   } else {
     // In preview: paper rectangle
-    svg += `<rect x="0" y="0" width="${docW}" height="${docH}" fill="#1e2024" stroke="#2a2e34" stroke-width="${strokeW * 1.5}"/>`;
+    svg += `<rect x="0" y="0" width="${docW}" height="${docH}" fill="#1e2024" stroke="#b49dff" stroke-opacity="0.55" stroke-width="${strokeW * 1.5}"/>`;
   }
 
   if (!geom) {
@@ -1139,6 +1547,29 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
     svg += `  </g>\n`;
   } else if (!forExport) {
     svg += `<rect x="${margins}" y="${margins}" width="${docW - margins * 2}" height="${docH - margins * 2}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeW * 0.5}" stroke-dasharray="${strokeW * 3} ${strokeW * 2}"/>`;
+  }
+
+  // Baseline grid (optional, harmonic mode only): fine reference lines
+  // spaced at base/ratio, the step below gutter in the harmonic series.
+  if (state.harmonicMode && state.showBaseline && state.baseline > 0) {
+    const baseColor = forExport ? "#FFB200" : "rgba(255,178,0,0.32)";
+    const baseSW = strokeW * 0.3;
+    const lineCount = Math.floor(docH / state.baseline);
+    if (forExport) {
+      svg += `  <g id="baseline" inkscape:groupmode="layer" inkscape:label="Baseline" stroke="${baseColor}" stroke-width="${baseSW}" fill="none">\n`;
+      for (let i = 1; i <= lineCount; i++) {
+        const y = i * state.baseline;
+        svg += `    <line x1="0" y1="${y.toFixed(4)}" x2="${docW}" y2="${y.toFixed(4)}"/>\n`;
+      }
+      svg += `  </g>\n`;
+    } else {
+      svg += `<g stroke="${baseColor}" stroke-width="${baseSW}" fill="none">`;
+      for (let i = 1; i <= lineCount; i++) {
+        const y = i * state.baseline;
+        svg += `<line x1="0" y1="${y}" x2="${docW}" y2="${y}"/>`;
+      }
+      svg += `</g>`;
+    }
   }
 
   // Build module rectangles
@@ -1240,8 +1671,8 @@ function updateStats() {
   alertEl.className = "canvas-top__alert"; // reset
 
   if (!geom) {
-    $("stat-w").textContent = "—";
-    $("stat-h").textContent = "—";
+    $("stat-w").value = ""; $("stat-w-unit").textContent = "";
+    $("stat-h").value = ""; $("stat-h-unit").textContent = "";
     $("stat-r").textContent = "—";
     $("stat-t").textContent = "—";
     alertEl.classList.add("alert--error");
@@ -1252,8 +1683,10 @@ function updateStats() {
   const { modW, modH } = geom;
   const ratio = modW / modH;
   const u = state.unit;
-  $("stat-w").textContent = `${modW.toFixed(2)} ${u}`;
-  $("stat-h").textContent = `${modH.toFixed(2)} ${u}`;
+  $("stat-w").value = modW.toFixed(2);
+  $("stat-w-unit").textContent = u;
+  $("stat-h").value = modH.toFixed(2);
+  $("stat-h-unit").textContent = u;
   $("stat-r").textContent = ratio.toFixed(3);
   $("stat-t").textContent = state.cols * state.rows;
 
@@ -1288,6 +1721,8 @@ function updateHeaderInfo() {
 // Full update                                                      //
 // -------------------------------------------------------------- //
 function update() {
+  computeHarmonic();
+  syncControlsFromState();
   renderPreview();
   updateStats();
   updateHeaderInfo();
@@ -1332,16 +1767,8 @@ function applyPreset(p) {
   const minDim = Math.min(state.docW, state.docH);
   const u = state.unit;
 
-  // Round to a natural increment per unit
-  const roundUnit = v => {
-    if (u === "pt" || u === "px") return Math.round(v);
-    if (u === "cm") return Math.round(v * 10) / 10;
-    if (u === "in") return Math.round(v * 20) / 20;
-    return Math.round(v * 2) / 2; // mm: 0.5 step
-  };
-
-  let margin = roundUnit(minDim * p.marginR);
-  let gutter = roundUnit(minDim * p.gutterR);
+  let margin = roundUnit(minDim * p.marginR, u);
+  let gutter = roundUnit(minDim * p.gutterR, u);
 
   // Clamp to slider ranges
   margin = clamp(margin, RANGES.margins.min, RANGES.margins.max);
@@ -1356,20 +1783,258 @@ function applyPreset(p) {
   };
   let attempts = 0;
   while (!isValid(margin, gutter) && attempts < 30) {
-    margin = roundUnit(margin * 0.8);
-    gutter = roundUnit(gutter * 0.8);
+    margin = roundUnit(margin * 0.8, u);
+    gutter = roundUnit(gutter * 0.8, u);
     if (margin === 0 && gutter === 0) break;
     attempts++;
   }
 
   state.cols = p.cols;
   state.rows = p.rows;
+  // Applying an iconic preset is a deliberate manual choice of margin/gutter
+  // character, so it takes precedence over harmonic mode for this run.
+  state.harmonicMode = false;
   state.margins = margin;
   state.gutter = gutter;
   // NOTE: we intentionally do NOT change the unit or document size.
   // The user's working context is preserved; only the grid character is applied.
   syncControlsFromState();
   update();
+}
+
+// -------------------------------------------------------------- //
+// Custom layouts (saved locally in the browser)                   //
+// -------------------------------------------------------------- //
+const LAYOUTS_KEY = "sge_custom_layouts";
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function loadLayouts() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LAYOUTS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveLayoutsToStorage(layouts) {
+  try {
+    localStorage.setItem(LAYOUTS_KEY, JSON.stringify(layouts));
+    return true;
+  } catch (e) {
+    return false; // private/incognito mode, storage full, or disabled -- fail soft
+  }
+}
+
+function saveCurrentLayout() {
+  const nameInput = $("layout-name");
+  const name = nameInput.value.trim();
+  if (!name) {
+    toast(t("toastLayoutNameRequired"), true);
+    nameInput.focus();
+    return;
+  }
+  const layouts = loadLayouts();
+  const snapshot = {
+    name,
+    docW: state.docW, docH: state.docH, unit: state.unit,
+    cols: state.cols, rows: state.rows,
+    margins: state.margins, gutter: state.gutter,
+    harmonicMode: state.harmonicMode, harmonicRatio: state.harmonicRatio,
+    harmonicBase: state.harmonicBase, showBaseline: state.showBaseline,
+    savedAt: Date.now()
+  };
+  const existingIdx = layouts.findIndex(l => l.name.toLowerCase() === name.toLowerCase());
+  const isUpdate = existingIdx >= 0;
+  if (isUpdate) layouts[existingIdx] = snapshot;
+  else layouts.unshift(snapshot);
+
+  if (!saveLayoutsToStorage(layouts)) {
+    toast(t("toastLayoutSaveError"), true);
+    return;
+  }
+  nameInput.value = "";
+  renderLayoutList();
+  toast(isUpdate ? t("toastLayoutUpdated") : t("toastLayoutSaved"));
+}
+
+function applyLayout(layout) {
+  state.docW = layout.docW; state.docH = layout.docH; state.unit = layout.unit;
+  state.cols = clamp(Math.round(layout.cols), RANGES.cols.min, RANGES.cols.max);
+  state.rows = clamp(Math.round(layout.rows), RANGES.rows.min, RANGES.rows.max);
+  state.margins = layout.margins; state.gutter = layout.gutter;
+  state.harmonicMode = layout.harmonicMode === true;
+  if (typeof layout.harmonicRatio === "number" && layout.harmonicRatio > 1) {
+    state.harmonicRatio = clamp(layout.harmonicRatio, 1.01, 4);
+  }
+  if (typeof layout.harmonicBase === "number") {
+    state.harmonicBase = clamp(layout.harmonicBase, RANGES.base.min, RANGES.base.max);
+  }
+  state.showBaseline = layout.showBaseline === true;
+  setFormat("custom", false);
+  update();
+  toast(t("toastLayoutApplied"));
+}
+
+function deleteLayout(name) {
+  saveLayoutsToStorage(loadLayouts().filter(l => l.name !== name));
+  renderLayoutList();
+  toast(t("toastLayoutDeleted"));
+}
+
+function renderLayoutList() {
+  const c = $("layout-list");
+  const layouts = loadLayouts();
+  c.innerHTML = "";
+
+  if (layouts.length === 0) {
+    const hint = document.createElement("p");
+    hint.className = "layout-empty-hint";
+    hint.textContent = t("layoutsEmpty");
+    c.appendChild(hint);
+    return;
+  }
+
+  layouts.forEach(l => {
+    const row = document.createElement("div");
+    row.className = "layout-item";
+
+    const left = document.createElement("div");
+    left.style.minWidth = "0";
+    left.style.overflow = "hidden";
+    left.innerHTML =
+      `<div class="layout-item__name">${escapeHtml(l.name)}</div>` +
+      `<div class="layout-item__meta">${l.cols}×${l.rows} · ${l.docW}×${l.docH} ${l.unit}</div>`;
+
+    const del = document.createElement("button");
+    del.className = "layout-item__delete";
+    del.innerHTML = "&times;";
+    del.title = t("deleteLayout");
+    del.onclick = e => { e.stopPropagation(); deleteLayout(l.name); };
+
+    row.appendChild(left);
+    row.appendChild(del);
+    row.onclick = () => applyLayout(l);
+    c.appendChild(row);
+  });
+}
+
+// -------------------------------------------------------------- //
+// Module W / H reverse calculation (solves for margin)             //
+// -------------------------------------------------------------- //
+// Module W and Module H share the same single margin value, so they can't
+// both be driven independently -- editing one solves margin from that axis
+// alone, which is also the most predictable behavior: the other module
+// value may shift as an honest side effect, exactly as it would if you'd
+// dragged the margin slider yourself.
+function applySolvedMargin(target) {
+  const clamped = clamp(roundUnit(target, state.unit), RANGES.margins.min, RANGES.margins.max);
+  const wasClamped = Math.abs(clamped - target) > 0.01;
+  state.harmonicMode = false; // directly setting a module size overrides the harmonic-derived margin
+  state.margins = clamped;
+  update();
+  if (wasClamped) toast(t("toastModuleClamped"), true);
+}
+
+function solveModuleW() {
+  const v = parseFloat($("stat-w").value);
+  if (isNaN(v) || v <= 0) { update(); return; }
+  const { cols, gutter, docW } = state;
+  applySolvedMargin((docW - cols * v - (cols - 1) * gutter) / 2);
+}
+
+function solveModuleH() {
+  const v = parseFloat($("stat-h").value);
+  if (isNaN(v) || v <= 0) { update(); return; }
+  const { rows, gutter, docH } = state;
+  applySolvedMargin((docH - rows * v - (rows - 1) * gutter) / 2);
+}
+
+// -------------------------------------------------------------- //
+// Harmonic scale calculator (reference tool, independent of the    //
+// document/grid state -- generates a list of values in a ratio,    //
+// e.g. font sizes or stroke weights, to use as Text/Graphic Styles  //
+// in Affinity or any other app).                                    //
+// -------------------------------------------------------------- //
+function computeScale() {
+  const { scaleRatio: ratio, scaleBase: base, scaleStepsDown: down, scaleStepsUp: up, scaleUnit: unit } = state;
+  const rows = [];
+  for (let i = -down; i <= up; i++) {
+    rows.push({ step: i, value: roundUnit(base * Math.pow(ratio, i), unit) });
+  }
+  return rows;
+}
+
+function renderScale() {
+  const c = $("scale-list");
+  c.innerHTML = "";
+  computeScale().forEach(r => {
+    const row = document.createElement("div");
+    row.className = "scale-row" + (r.step === 0 ? " scale-row--base" : "");
+    const stepLabel = r.step === 0 ? "0" : (r.step > 0 ? "+" + r.step : String(r.step));
+    const valueLabel = `${r.value}${state.scaleUnit}`;
+    row.innerHTML =
+      `<span class="scale-row__step">${stepLabel}</span>` +
+      `<span class="scale-row__value">${valueLabel}</span>` +
+      `<button class="scale-row__copy" title="${t("copyShort")}">` +
+      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
+      `<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>` +
+      `<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>` +
+      `</svg></button>`;
+    row.querySelector(".scale-row__copy").onclick = e => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(valueLabel).then(() => toast(t("toastCopied")));
+    };
+    c.appendChild(row);
+  });
+}
+
+function bindScale() {
+  $("scale-ratio").addEventListener("change", () => {
+    const v = $("scale-ratio").value;
+    state.scaleRatio = v === "custom"
+      ? clamp(parseFloat($("scale-ratio-custom").value) || 1.618, 1.01, 4)
+      : parseFloat(v);
+    $("scale-custom-wrap").classList.toggle("is-hidden", v !== "custom");
+    renderScale();
+  });
+  $("scale-ratio-custom").addEventListener("change", () => {
+    let v = parseFloat($("scale-ratio-custom").value);
+    if (isNaN(v)) v = 1.618;
+    state.scaleRatio = clamp(v, 1.01, 4);
+    $("scale-ratio-custom").value = state.scaleRatio;
+    renderScale();
+  });
+  $("scale-base").addEventListener("change", () => {
+    let v = parseFloat($("scale-base").value);
+    if (isNaN(v) || v <= 0) v = 16;
+    state.scaleBase = clamp(v, 1, 500);
+    $("scale-base").value = state.scaleBase;
+    renderScale();
+  });
+  $("scale-unit").addEventListener("change", () => {
+    state.scaleUnit = $("scale-unit").value;
+    renderScale();
+  });
+  $("scale-steps-down").addEventListener("change", () => {
+    state.scaleStepsDown = clamp(Math.round(parseFloat($("scale-steps-down").value) || 0), 0, 6);
+    $("scale-steps-down").value = state.scaleStepsDown;
+    renderScale();
+  });
+  $("scale-steps-up").addEventListener("change", () => {
+    state.scaleStepsUp = clamp(Math.round(parseFloat($("scale-steps-up").value) || 0), 0, 10);
+    $("scale-steps-up").value = state.scaleStepsUp;
+    renderScale();
+  });
+  $("btn-copy-scale").addEventListener("click", () => {
+    const text = computeScale()
+      .map(r => `${r.step === 0 ? "0" : (r.step > 0 ? "+" : "") + r.step}: ${r.value}${state.scaleUnit}`)
+      .join("\n");
+    navigator.clipboard.writeText(text).then(() => toast(t("toastScaleCopied")));
+  });
 }
 
 // -------------------------------------------------------------- //
@@ -1410,18 +2075,104 @@ function bindDocSize() {
     const f = $("format").value;
     if (f === "custom") return;
     const fmt = FORMATS[f];
+    const oldUnit = state.unit;
+    if (fmt.unit !== oldUnit) {
+      // A named format (e.g. "US Letter") carries its own native unit. If
+      // that differs from the current one, convert margin/gutter/base the
+      // same way the unit dropdown does, so they stay physically meaningful
+      // instead of being silently relabeled into the new unit.
+      const convert = v => fromPt(toPt(v, oldUnit), fmt.unit);
+      state.margins = clamp(roundUnit(convert(state.margins), fmt.unit), RANGES.margins.min, RANGES.margins.max);
+      state.gutter = clamp(roundUnit(convert(state.gutter), fmt.unit), RANGES.gutter.min, RANGES.gutter.max);
+      state.harmonicBase = clamp(roundUnit(convert(state.harmonicBase), fmt.unit), RANGES.base.min, RANGES.base.max);
+    }
     state.docW = fmt.w; state.docH = fmt.h; state.unit = fmt.unit;
     $("doc-w").value = fmt.w; $("doc-h").value = fmt.h; $("unit").value = fmt.unit;
     update();
   });
   $("unit").addEventListener("change", () => {
-    state.unit = $("unit").value;
+    const newUnit = $("unit").value;
+    const oldUnit = state.unit;
+    if (newUnit !== oldUnit) {
+      // Changing units should preserve the document's physical size (an A3
+      // sheet stays an A3 sheet), not reinterpret the same numbers in a new
+      // unit. Convert every dimensional field through pt as a common base.
+      const convert = v => fromPt(toPt(v, oldUnit), newUnit);
+      const roundDoc = v => (newUnit === "px") ? Math.round(v) : Math.round(v * 100) / 100;
+      state.docW = roundDoc(convert(state.docW));
+      state.docH = roundDoc(convert(state.docH));
+      state.margins = clamp(roundUnit(convert(state.margins), newUnit), RANGES.margins.min, RANGES.margins.max);
+      state.gutter = clamp(roundUnit(convert(state.gutter), newUnit), RANGES.gutter.min, RANGES.gutter.max);
+      state.harmonicBase = clamp(roundUnit(convert(state.harmonicBase), newUnit), RANGES.base.min, RANGES.base.max);
+      $("doc-w").value = state.docW; $("doc-h").value = state.docH;
+    }
+    state.unit = newUnit;
     update();
   });
 }
 
 function setFormat(value, updateState) {
   $("format").value = value;
+}
+
+function swapOrientation() {
+  const w = state.docW;
+  state.docW = state.docH;
+  state.docH = w;
+  setFormat("custom", false);
+  update();
+}
+
+function bindHarmonicMode() {
+  $("chk-harmonic").addEventListener("change", () => {
+    const turningOn = $("chk-harmonic").checked;
+    if (turningOn) {
+      // Remember the manual values so turning this back off restores them,
+      // instead of permanently overwriting margin/gutter.
+      preHarmonicSnapshot = { margins: state.margins, gutter: state.gutter };
+    } else if (preHarmonicSnapshot) {
+      let { margins: m, gutter: g } = preHarmonicSnapshot;
+      const { cols, rows, docW, docH, unit } = state;
+      // Cols/rows/doc size may have changed while harmonic mode was on --
+      // revalidate the restored values still produce a fitting grid.
+      const fits = (mm, gg) => (docW - 2 * mm - (cols - 1) * gg) / cols > 0
+                             && (docH - 2 * mm - (rows - 1) * gg) / rows > 0;
+      let attempts = 0;
+      while (!fits(m, g) && attempts < 30) {
+        m = roundUnit(m * 0.8, unit);
+        g = roundUnit(g * 0.8, unit);
+        attempts++;
+      }
+      state.margins = clamp(m, RANGES.margins.min, RANGES.margins.max);
+      state.gutter = clamp(g, RANGES.gutter.min, RANGES.gutter.max);
+      preHarmonicSnapshot = null;
+    }
+    state.harmonicMode = turningOn;
+    update();
+  });
+
+  $("harmonic-ratio").addEventListener("change", () => {
+    const v = $("harmonic-ratio").value;
+    state.harmonicRatio = v === "custom"
+      ? clamp(parseFloat($("harmonic-ratio-custom").value) || 1.618, 1.01, 4)
+      : parseFloat(v);
+    update();
+  });
+
+  $("harmonic-ratio-custom").addEventListener("change", () => {
+    let v = parseFloat($("harmonic-ratio-custom").value);
+    if (isNaN(v)) v = 1.618;
+    v = clamp(v, 1.01, 4);
+    state.harmonicRatio = v;
+    update();
+  });
+
+  $("chk-baseline").addEventListener("change", () => {
+    state.showBaseline = $("chk-baseline").checked;
+    update();
+  });
+
+  bindSliderPair("base", "base-val", "harmonicBase", RANGES.base);
 }
 
 function syncControlsFromState() {
@@ -1431,6 +2182,29 @@ function syncControlsFromState() {
   $("gutt").value = state.gutter; $("gutt-val").value = state.gutter;
   $("doc-w").value = state.docW; $("doc-h").value = state.docH;
   $("unit").value = state.unit;
+
+  // Harmonic mode
+  $("chk-harmonic").checked = state.harmonicMode;
+  $("base").value = state.harmonicBase; $("base-val").value = state.harmonicBase;
+  $("baseline-val").value = state.baseline;
+  const isCustomRatio = !HARMONIC_RATIO_PRESETS.includes(state.harmonicRatio);
+  $("harmonic-ratio").value = isCustomRatio ? "custom" : String(state.harmonicRatio);
+  $("harmonic-ratio-custom").value = state.harmonicRatio;
+  $("harmonic-controls").classList.toggle("is-hidden", !state.harmonicMode);
+  $("harmonic-custom-wrap").classList.toggle("is-hidden", !isCustomRatio);
+
+  // Margin & gutter become read-only (derived) while harmonic mode is on
+  $("marg").disabled = state.harmonicMode;
+  $("marg-val").disabled = state.harmonicMode;
+  $("gutt").disabled = state.harmonicMode;
+  $("gutt-val").disabled = state.harmonicMode;
+  $("marg-field").classList.toggle("field--locked", state.harmonicMode);
+  $("gutt-field").classList.toggle("field--locked", state.harmonicMode);
+
+  // "Show baseline" only makes sense while harmonic mode is active
+  $("chk-baseline").checked = state.showBaseline;
+  $("chk-baseline").disabled = !state.harmonicMode;
+  $("baseline-toggle").classList.toggle("field--locked", !state.harmonicMode);
 }
 
 // -------------------------------------------------------------- //
@@ -1467,6 +2241,8 @@ function exportJSON() {
     docW: state.docW, docH: state.docH, unit: state.unit,
     cols: state.cols, rows: state.rows,
     margins: state.margins, gutter: state.gutter,
+    harmonicMode: state.harmonicMode, harmonicRatio: state.harmonicRatio,
+    harmonicBase: state.harmonicBase, showBaseline: state.showBaseline,
     version: VERSION
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -1498,6 +2274,18 @@ function importJSON(file) {
       state.unit = data.unit;
       if (typeof data.docW === "number" && data.docW > 0) state.docW = data.docW;
       if (typeof data.docH === "number" && data.docH > 0) state.docH = data.docH;
+
+      // Harmonic mode fields are optional: JSON exported from v1.x simply
+      // won't have them, and the grid still imports fine without it.
+      state.harmonicMode = data.harmonicMode === true;
+      if (typeof data.harmonicRatio === "number" && data.harmonicRatio > 1) {
+        state.harmonicRatio = clamp(data.harmonicRatio, 1.01, 4);
+      }
+      if (typeof data.harmonicBase === "number") {
+        state.harmonicBase = clamp(data.harmonicBase, RANGES.base.min, RANGES.base.max);
+      }
+      state.showBaseline = data.showBaseline === true;
+
       syncControlsFromState();
       update();
       toast(t("toastImport"));
@@ -1534,13 +2322,22 @@ function setLang(lang) {
     const key = el.getAttribute("data-i18n");
     el.textContent = t(key);
   });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    el.placeholder = t(el.getAttribute("data-i18n-placeholder"));
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach(el => {
+    el.title = t(el.getAttribute("data-i18n-title"));
+  });
   // Update unit selector options (hardcoded HTML, not covered by data-i18n)
   const unitMap = { mm: "unitMM", cm: "unitCM", in: "unitIN", pt: "unitPT", px: "unitPX" };
   document.querySelectorAll("#unit option").forEach(opt => {
     const key = unitMap[opt.value];
     if (key) opt.textContent = t(key);
   });
+  $("btn-swap-orientation").title = t("swapOrientation");
   renderPresets();
+  renderLayoutList();
+  renderScale();
   updateStats();
 }
 
@@ -1580,6 +2377,7 @@ function enhanceNumberInputs() {
 
   document.querySelectorAll('input[type="number"]').forEach(input => {
     if (input.dataset.enhanced) return;
+    if (input.classList.contains("stat__input")) return; // compact stats bar has no room for stepper chrome
     input.dataset.enhanced = "true";
 
     // Wrap input in stepper container
@@ -1635,6 +2433,15 @@ function init() {
   bindSliderPair("marg", "marg-val", "margins", RANGES.margins);
   bindSliderPair("gutt", "gutt-val", "gutter", RANGES.gutter);
   bindDocSize();
+  bindHarmonicMode();
+  $("btn-swap-orientation").onclick = swapOrientation;
+  $("btn-save-layout").onclick = saveCurrentLayout;
+  $("layout-name").addEventListener("keydown", e => { if (e.key === "Enter") saveCurrentLayout(); });
+  $("stat-w").addEventListener("change", solveModuleW);
+  $("stat-h").addEventListener("change", solveModuleH);
+  renderLayoutList();
+  bindScale();
+  renderScale();
 
   $("lang-es").onclick = () => setLang("es");
   $("lang-en").onclick = () => setLang("en");

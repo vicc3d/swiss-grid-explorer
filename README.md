@@ -17,6 +17,8 @@ Available as a **web app**, an **Adobe Illustrator script**, and an **Affinity s
 | Affinity (English) | `scripts/affinity/swiss_grid_generator_en.js` | Affinity (April 2026+) with MCP |
 | Affinity (Español) | `scripts/affinity/swiss_grid_generator_es.js` | Affinity (April 2026+) with MCP |
 
+**Current versions:** Web app `v1.2` · Illustrator `v1.2` · Affinity `v1.2` · Harmonic Scale snap (Affinity) `v1.0`
+
 ---
 
 ## Web App
@@ -25,9 +27,14 @@ Open `index.html` directly in any browser. No dependencies, no build step, no se
 
 **Features:**
 - Live SVG preview that updates as you adjust parameters
-- 10 document formats (A3, A4, A5, Letter, Web 1440/1920, Mobile, and more)
-- 5 unit systems: mm, cm, in, pt, px
+- 13 document formats (A0–A5, Letter, Legal, Poster, Square, Web 1440/1920, Mobile, and more)
+- 5 unit systems: mm, cm, in, pt, px — switching units preserves the document's physical size
+- Orientation toggle (swap width/height)
 - 6 iconic historical presets (see below)
+- Save, apply, and delete your own custom layouts (stored locally in the browser)
+- Editable Module W / Module H — type a target module size and the margin solves for it
+- **Harmonic mode:** lock margin, gutter and an optional baseline grid to a single base value and a master ratio (Phi, √2, 3:2, 4:3, 5:4, 2:1, or a custom value) — a modular scale for the grid itself
+- **Harmonic Scale calculator:** generate a reference scale (font size, stroke weight, spacing) in the same ratio, with one-click copy — pairs with the companion Affinity script below
 - Export as SVG with named layer groups — compatible with Illustrator, Affinity, and Inkscape
 - Import / export settings as JSON
 - Bilingual interface (ES / EN)
@@ -79,10 +86,17 @@ Two versions available — same functionality, different interface language.
 - Auto-detects document dimensions and DPI
 - Generates native guides directly on the document (no layers or vector objects)
 - 6 iconic presets that adapt proportionally to any page size
+- **Harmonic mode (v1.2):** lock margin and gutter — and the baseline grid, if enabled — to a base value and a master ratio (Phi, √2, 3:2, 4:3, 5:4, or 2:1)
 - Single undo step for the entire grid (`CompoundCommandBuilder`)
 - Optional baseline grid
 
 > **Master Spread note:** the Affinity SDK cannot switch to a Master Spread programmatically. To apply guides to a master, switch to that tab manually before running the script.
+
+### Companion script: Harmonic Scale — Snap Font Size
+
+Select text (or a text frame) and run `harmonic_scale_snap_en.js` / `harmonic_scale_snap_es.js`. It reads the current font size, computes the nearest value in a harmonic scale (base × ratio^n — Phi, √2, 3:2, 4:3, 5:4, octave, or a custom ratio typed in), and snaps the selection to it.
+
+This does **not** create a named Text Style — the Affinity SDK has no API to register one in the Paragraph/Character Studio panels, only to apply an existing one by name. Snapping the raw font size directly is the closest equivalent achievable from a script. Same install steps as above.
 
 ---
 
@@ -125,15 +139,17 @@ The exported SVG uses named `<g>` groups for cross-app compatibility:
 
 ```
 swiss-grid-explorer/
-├── index.html                                    ← Web app
+├── index.html                                    ← Web app (v1.2)
 ├── README.md
 ├── LICENSE
 └── scripts/
     ├── illustrator/
-    │   └── swiss_grid_explorer.jsx               ← Illustrator script (v1.1)
+    │   └── swiss_grid_explorer.jsx               ← Illustrator script (v1.2)
     └── affinity/
-        ├── swiss_grid_generator_en.js            ← Affinity script — English (v1.1)
-        └── swiss_grid_generator_es.js            ← Affinity script — Español (v1.1)
+        ├── swiss_grid_generator_en.js            ← Affinity script — English (v1.2)
+        ├── swiss_grid_generator_es.js            ← Affinity script — Español (v1.2)
+        ├── harmonic_scale_snap_en.js             ← Companion: snap font size — English (v1.0)
+        └── harmonic_scale_snap_es.js             ← Companion: snap font size — Español (v1.0)
 ```
 
 ---
