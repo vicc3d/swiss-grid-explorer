@@ -962,6 +962,14 @@
           <input class="slider" id="rows" type="range" min="1" max="32" value="6">
         </div>
 
+        <div class="field" id="gutt-field">
+          <div class="field__row">
+            <span class="field__label" data-i18n="gutter">Medianil</span>
+            <input class="field__value" id="gutt-val" type="number" min="0" max="80" step="0.5" value="5">
+          </div>
+          <input class="slider" id="gutt" type="range" min="0" max="80" step="0.5" value="5">
+        </div>
+
         <div class="field" id="marg-field">
           <div class="field__row">
             <span class="field__label" data-i18n="margins">Márgenes</span>
@@ -970,12 +978,41 @@
           <input class="slider" id="marg" type="range" min="0" max="200" step="0.5" value="15">
         </div>
 
-        <div class="field" id="gutt-field">
-          <div class="field__row">
-            <span class="field__label" data-i18n="gutter">Medianil</span>
-            <input class="field__value" id="gutt-val" type="number" min="0" max="80" step="0.5" value="5">
+        <label class="checkbox" id="chk-indep-margins-wrap">
+          <input type="checkbox" id="chk-indep-margins">
+          <span class="checkbox__box"></span>
+          <span class="checkbox__label" data-i18n="indepMarginsEnable">Márgenes independientes por lado</span>
+        </label>
+
+        <div id="indep-margins-controls" class="is-hidden">
+          <div class="field">
+            <div class="field__row">
+              <span class="field__label" data-i18n="marginTop">Superior</span>
+              <input class="field__value" id="marg-top-val" type="number" min="0" max="200" step="0.5" value="15">
+            </div>
+            <input class="slider" id="marg-top" type="range" min="0" max="200" step="0.5" value="15">
           </div>
-          <input class="slider" id="gutt" type="range" min="0" max="80" step="0.5" value="5">
+          <div class="field">
+            <div class="field__row">
+              <span class="field__label" data-i18n="marginRight">Derecho</span>
+              <input class="field__value" id="marg-right-val" type="number" min="0" max="200" step="0.5" value="15">
+            </div>
+            <input class="slider" id="marg-right" type="range" min="0" max="200" step="0.5" value="15">
+          </div>
+          <div class="field">
+            <div class="field__row">
+              <span class="field__label" data-i18n="marginBottom">Inferior</span>
+              <input class="field__value" id="marg-bottom-val" type="number" min="0" max="200" step="0.5" value="15">
+            </div>
+            <input class="slider" id="marg-bottom" type="range" min="0" max="200" step="0.5" value="15">
+          </div>
+          <div class="field">
+            <div class="field__row">
+              <span class="field__label" data-i18n="marginLeft">Izquierdo</span>
+              <input class="field__value" id="marg-left-val" type="number" min="0" max="200" step="0.5" value="15">
+            </div>
+            <input class="slider" id="marg-left" type="range" min="0" max="200" step="0.5" value="15">
+          </div>
         </div>
       </div>
 
@@ -1223,7 +1260,7 @@
 /* Concept, UX/UI & Design: Victor Crespo, 3dvic.com                */
 /* ============================================================== */
 
-const VERSION = "v1.2";
+const VERSION = "v1.3";
 
 // -------------------------------------------------------------- //
 // i18n                                                             //
@@ -1233,6 +1270,8 @@ const i18n = {
     about: "Acerca de", document: "Documento", format: "Formato",
     width: "Ancho", height: "Alto", unit: "Unidad", grid: "Retícula",
     columns: "Columnas", rows: "Filas", margins: "Márgenes", gutter: "Medianil",
+    indepMarginsEnable: "Márgenes independientes por lado",
+    marginTop: "Superior", marginRight: "Derecho", marginBottom: "Inferior", marginLeft: "Izquierdo",
     output: "Output", genGuides: "Generar guías",
     genMargins: "Incluir margen", numberModules: "Numerar módulos",
     harmonic: "Modo armónico",
@@ -1249,9 +1288,9 @@ const i18n = {
     copySvg: "Copiar SVG", downloadSvg: "Descargar SVG",
     moduleW: "Módulo W", moduleH: "Módulo H", ratio: "Proporción", total: "Total",
     custom: "Personalizado",
-    vertOptimal: "Proporción vertical · Óptima",
-    horizAlert: "Proporción horizontal · Evitar en texto",
-    squareOptimal: "Proporción cuadrada · Excelente",
+    vertOptimal: "Proporción del módulo: vertical · Óptima",
+    horizAlert: "Proporción del módulo: horizontal · Evitar en texto",
+    squareOptimal: "Proporción del módulo: cuadrada · Excelente",
     errorMargins: "Error · Márgenes excesivos",
     aboutTitle: "Acerca de Swiss Grid Explorer",
     aboutBody: `Swiss Grid Explorer ${VERSION}\n\nUna herramienta de diseño paramétrico para la generación de retículas estructurales en formato SVG, compatible con Adobe Illustrator, Affinity Designer, Inkscape y editores web.\n\nLa retícula y las guías se exportan en grupos separados (<g>) con clases identificables, para que cada editor las reconozca como capas independientes.\n\nEl Modo armónico (Φ, √2, y otras proporciones) nace de una idea de Cron, de la comunidad de Affinity en Discord. Gracias por la propuesta.\n\n3dvic.com · MIT License`,
@@ -1282,6 +1321,8 @@ const i18n = {
     about: "About", document: "Document", format: "Format",
     width: "Width", height: "Height", unit: "Unit", grid: "Grid",
     columns: "Columns", rows: "Rows", margins: "Margins", gutter: "Gutter",
+    indepMarginsEnable: "Independent margins per side",
+    marginTop: "Top", marginRight: "Right", marginBottom: "Bottom", marginLeft: "Left",
     output: "Output", genGuides: "Generate guides",
     genMargins: "Include margin", numberModules: "Number modules",
     harmonic: "Harmonic mode",
@@ -1298,9 +1339,9 @@ const i18n = {
     copySvg: "Copy SVG", downloadSvg: "Download SVG",
     moduleW: "Module W", moduleH: "Module H", ratio: "Ratio", total: "Total",
     custom: "Custom",
-    vertOptimal: "Vertical ratio · Optimal",
-    horizAlert: "Horizontal ratio · Avoid for text",
-    squareOptimal: "Square ratio · Excellent",
+    vertOptimal: "Module ratio: vertical · Optimal",
+    horizAlert: "Module ratio: horizontal · Avoid for text",
+    squareOptimal: "Module ratio: square · Excellent",
     errorMargins: "Error · Excessive margins",
     aboutTitle: "About Swiss Grid Explorer",
     aboutBody: `Swiss Grid Explorer ${VERSION}\n\nA parametric design tool for generating structural grids as SVG files, compatible with Adobe Illustrator, Affinity Designer, Inkscape and web editors.\n\nThe grid and guides export in separate groups (<g>) with named classes, so each editor reads them as independent layers.\n\nHarmonic Mode (Φ, √2, and other ratios) was sparked by an idea from Cron, from the Affinity Discord community. Thanks for the suggestion.\n\n3dvic.com · MIT License`,
@@ -1415,17 +1456,36 @@ const HARMONIC_RATIO_PRESETS = [1.618, 1.414, 1.5, 1.333, 1.25, 2];
 const state = {
   docW: 210, docH: 297, unit: "mm",
   cols: 4, rows: 6, margins: 15, gutter: 5,
+  independentMargins: false,
+  marginTop: 15, marginRight: 15, marginBottom: 15, marginLeft: 15,
   harmonicMode: false, harmonicRatio: 1.618, harmonicBase: 8,
   baseline: 5, showBaseline: false,
   scaleRatio: 1.618, scaleBase: 16, scaleUnit: "px",
   scaleStepsDown: 2, scaleStepsUp: 5
 };
 
+// Resolves the effective per-side margins, whether the user is in the
+// simple (single value, all sides equal) or independent mode. Every part
+// of the app that needs a margin value goes through this instead of
+// reading state.margins directly, so the two modes never drift apart.
+function getMargins() {
+  if (state.independentMargins) {
+    return { top: state.marginTop, right: state.marginRight, bottom: state.marginBottom, left: state.marginLeft };
+  }
+  return { top: state.margins, right: state.margins, bottom: state.margins, left: state.margins };
+}
+
 // Holds margin/gutter from just before harmonic mode was switched on, so
 // switching it back off can restore them. Deliberately NOT part of `state`:
 // it's transient editing memory, not something that belongs in exported
 // JSON or saved layouts.
 let preHarmonicSnapshot = null;
+
+// Same idea, for independent margins: remembers the uniform margin value
+// from just before the user switched into per-side mode, so switching back
+// off restores exactly that -- not whatever value happened to be in the
+// Top field. Also transient, not part of state/exports.
+let preIndependentMarginsSnapshot = null;
 
 // -------------------------------------------------------------- //
 // Harmonic mode                                                   //
@@ -1474,9 +1534,10 @@ const $ = id => document.getElementById(id);
 // Compute geometry (in document unit)                              //
 // -------------------------------------------------------------- //
 function computeGrid() {
-  const { docW, docH, cols, rows, margins, gutter } = state;
-  const gridW = docW - margins * 2;
-  const gridH = docH - margins * 2;
+  const { docW, docH, cols, rows, gutter } = state;
+  const m = getMargins();
+  const gridW = docW - m.left - m.right;
+  const gridH = docH - m.top - m.bottom;
   if (gridW <= 0 || gridH <= 0) return null;
   const modW = (gridW - gutter * (cols - 1)) / cols;
   const modH = (gridH - gutter * (rows - 1)) / rows;
@@ -1488,7 +1549,8 @@ function computeGrid() {
 // Build SVG (used for both preview AND export)                     //
 // -------------------------------------------------------------- //
 function buildSVG({ forExport = false, withGuides = true, withMargins = true, withNumbers = false } = {}) {
-  const { docW, docH, unit, cols, rows, margins, gutter } = state;
+  const { docW, docH, unit, cols, rows, gutter } = state;
+  const m = getMargins();
   const geom = computeGrid();
 
   // Scale factor for visual stroke widths (so they read well at any doc size)
@@ -1510,7 +1572,13 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
     svg += `    <sge:settings xmlns:sge="https://swissgrid.app">\n`;
     svg += `      <sge:cols>${cols}</sge:cols>\n`;
     svg += `      <sge:rows>${rows}</sge:rows>\n`;
-    svg += `      <sge:margins>${margins}</sge:margins>\n`;
+    svg += `      <sge:margins>${state.margins}</sge:margins>\n`;
+    if (state.independentMargins) {
+      svg += `      <sge:marginTop>${state.marginTop}</sge:marginTop>\n`;
+      svg += `      <sge:marginRight>${state.marginRight}</sge:marginRight>\n`;
+      svg += `      <sge:marginBottom>${state.marginBottom}</sge:marginBottom>\n`;
+      svg += `      <sge:marginLeft>${state.marginLeft}</sge:marginLeft>\n`;
+    }
     svg += `      <sge:gutter>${gutter}</sge:gutter>\n`;
     svg += `      <sge:unit>${unit}</sge:unit>\n`;
     if (state.harmonicMode) {
@@ -1543,10 +1611,10 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
   // Margin rectangle (subtle in preview, optional in export)
   if (withMargins && forExport) {
     svg += `  <g id="margin" inkscape:groupmode="layer" inkscape:label="Margin" stroke="#888" stroke-width="${strokeW * 0.5}" stroke-dasharray="${strokeW * 4} ${strokeW * 2}" fill="none">\n`;
-    svg += `    <rect x="${margins}" y="${margins}" width="${docW - margins * 2}" height="${docH - margins * 2}"/>\n`;
+    svg += `    <rect x="${m.left}" y="${m.top}" width="${docW - m.left - m.right}" height="${docH - m.top - m.bottom}"/>\n`;
     svg += `  </g>\n`;
   } else if (!forExport) {
-    svg += `<rect x="${margins}" y="${margins}" width="${docW - margins * 2}" height="${docH - margins * 2}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeW * 0.5}" stroke-dasharray="${strokeW * 3} ${strokeW * 2}"/>`;
+    svg += `<rect x="${m.left}" y="${m.top}" width="${docW - m.left - m.right}" height="${docH - m.top - m.bottom}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeW * 0.5}" stroke-dasharray="${strokeW * 3} ${strokeW * 2}"/>`;
   }
 
   // Baseline grid (optional, harmonic mode only): fine reference lines
@@ -1584,8 +1652,8 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const x = margins + c * (modW + gutter);
-      const y = margins + r * (modH + gutter);
+      const x = m.left + c * (modW + gutter);
+      const y = m.top + r * (modH + gutter);
       if (forExport) {
         svg += `    <rect x="${x.toFixed(4)}" y="${y.toFixed(4)}" width="${modW.toFixed(4)}" height="${modH.toFixed(4)}"/>\n`;
       } else {
@@ -1604,7 +1672,7 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
   if (withGuides && forExport) {
     svg += `  <g id="guides" inkscape:groupmode="layer" inkscape:label="Guides" stroke="#FF00CC" stroke-width="${strokeW * 0.4}" stroke-opacity="0.4" fill="none">\n`;
     for (let c = 0; c <= cols; c++) {
-      const x = margins + c * (modW + gutter);
+      const x = m.left + c * (modW + gutter);
       svg += `    <line x1="${x.toFixed(4)}" y1="0" x2="${x.toFixed(4)}" y2="${docH}"/>\n`;
       if (c < cols) {
         const x2 = x + modW;
@@ -1612,7 +1680,7 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
       }
     }
     for (let r = 0; r <= rows; r++) {
-      const y = margins + r * (modH + gutter);
+      const y = m.top + r * (modH + gutter);
       svg += `    <line x1="0" y1="${y.toFixed(4)}" x2="${docW}" y2="${y.toFixed(4)}"/>\n`;
       if (r < rows) {
         const y2 = y + modH;
@@ -1628,8 +1696,8 @@ function buildSVG({ forExport = false, withGuides = true, withMargins = true, wi
     let n = 1;
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const x = margins + c * (modW + gutter) + modW * 0.5;
-        const y = margins + r * (modH + gutter) + modH * 0.5 + modH * 0.06;
+        const x = m.left + c * (modW + gutter) + modW * 0.5;
+        const y = m.top + r * (modH + gutter) + modH * 0.5 + modH * 0.06;
         svg += `    <text x="${x.toFixed(4)}" y="${y.toFixed(4)}" text-anchor="middle">${String(n).padStart(2,'0')}</text>\n`;
         n++;
       }
@@ -1792,9 +1860,12 @@ function applyPreset(p) {
   state.cols = p.cols;
   state.rows = p.rows;
   // Applying an iconic preset is a deliberate manual choice of margin/gutter
-  // character, so it takes precedence over harmonic mode for this run.
+  // character, so it takes precedence over harmonic mode AND independent
+  // margins for this run -- presets are historically uniform by design.
   state.harmonicMode = false;
+  state.independentMargins = false;
   state.margins = margin;
+  state.marginTop = state.marginRight = state.marginBottom = state.marginLeft = margin;
   state.gutter = gutter;
   // NOTE: we intentionally do NOT change the unit or document size.
   // The user's working context is preserved; only the grid character is applied.
@@ -1843,6 +1914,9 @@ function saveCurrentLayout() {
     docW: state.docW, docH: state.docH, unit: state.unit,
     cols: state.cols, rows: state.rows,
     margins: state.margins, gutter: state.gutter,
+    independentMargins: state.independentMargins,
+    marginTop: state.marginTop, marginRight: state.marginRight,
+    marginBottom: state.marginBottom, marginLeft: state.marginLeft,
     harmonicMode: state.harmonicMode, harmonicRatio: state.harmonicRatio,
     harmonicBase: state.harmonicBase, showBaseline: state.showBaseline,
     savedAt: Date.now()
@@ -1866,6 +1940,13 @@ function applyLayout(layout) {
   state.cols = clamp(Math.round(layout.cols), RANGES.cols.min, RANGES.cols.max);
   state.rows = clamp(Math.round(layout.rows), RANGES.rows.min, RANGES.rows.max);
   state.margins = layout.margins; state.gutter = layout.gutter;
+  // Older saved layouts won't have these fields -- default to uniform mode
+  // (independentMargins: false) so they load exactly as they used to.
+  state.independentMargins = layout.independentMargins === true;
+  state.marginTop = typeof layout.marginTop === "number" ? layout.marginTop : state.margins;
+  state.marginRight = typeof layout.marginRight === "number" ? layout.marginRight : state.margins;
+  state.marginBottom = typeof layout.marginBottom === "number" ? layout.marginBottom : state.margins;
+  state.marginLeft = typeof layout.marginLeft === "number" ? layout.marginLeft : state.margins;
   state.harmonicMode = layout.harmonicMode === true;
   if (typeof layout.harmonicRatio === "number" && layout.harmonicRatio > 1) {
     state.harmonicRatio = clamp(layout.harmonicRatio, 1.01, 4);
@@ -1934,6 +2015,7 @@ function applySolvedMargin(target) {
   const clamped = clamp(roundUnit(target, state.unit), RANGES.margins.min, RANGES.margins.max);
   const wasClamped = Math.abs(clamped - target) > 0.01;
   state.harmonicMode = false; // directly setting a module size overrides the harmonic-derived margin
+  state.independentMargins = false; // this solves a single shared margin, so per-side values no longer apply
   state.margins = clamped;
   update();
   if (wasClamped) toast(t("toastModuleClamped"), true);
@@ -2083,6 +2165,10 @@ function bindDocSize() {
       // instead of being silently relabeled into the new unit.
       const convert = v => fromPt(toPt(v, oldUnit), fmt.unit);
       state.margins = clamp(roundUnit(convert(state.margins), fmt.unit), RANGES.margins.min, RANGES.margins.max);
+      state.marginTop = clamp(roundUnit(convert(state.marginTop), fmt.unit), RANGES.margins.min, RANGES.margins.max);
+      state.marginRight = clamp(roundUnit(convert(state.marginRight), fmt.unit), RANGES.margins.min, RANGES.margins.max);
+      state.marginBottom = clamp(roundUnit(convert(state.marginBottom), fmt.unit), RANGES.margins.min, RANGES.margins.max);
+      state.marginLeft = clamp(roundUnit(convert(state.marginLeft), fmt.unit), RANGES.margins.min, RANGES.margins.max);
       state.gutter = clamp(roundUnit(convert(state.gutter), fmt.unit), RANGES.gutter.min, RANGES.gutter.max);
       state.harmonicBase = clamp(roundUnit(convert(state.harmonicBase), fmt.unit), RANGES.base.min, RANGES.base.max);
     }
@@ -2102,6 +2188,10 @@ function bindDocSize() {
       state.docW = roundDoc(convert(state.docW));
       state.docH = roundDoc(convert(state.docH));
       state.margins = clamp(roundUnit(convert(state.margins), newUnit), RANGES.margins.min, RANGES.margins.max);
+      state.marginTop = clamp(roundUnit(convert(state.marginTop), newUnit), RANGES.margins.min, RANGES.margins.max);
+      state.marginRight = clamp(roundUnit(convert(state.marginRight), newUnit), RANGES.margins.min, RANGES.margins.max);
+      state.marginBottom = clamp(roundUnit(convert(state.marginBottom), newUnit), RANGES.margins.min, RANGES.margins.max);
+      state.marginLeft = clamp(roundUnit(convert(state.marginLeft), newUnit), RANGES.margins.min, RANGES.margins.max);
       state.gutter = clamp(roundUnit(convert(state.gutter), newUnit), RANGES.gutter.min, RANGES.gutter.max);
       state.harmonicBase = clamp(roundUnit(convert(state.harmonicBase), newUnit), RANGES.base.min, RANGES.base.max);
       $("doc-w").value = state.docW; $("doc-h").value = state.docH;
@@ -2148,6 +2238,39 @@ function bindHarmonicMode() {
       preHarmonicSnapshot = null;
     }
     state.harmonicMode = turningOn;
+    if (turningOn && state.independentMargins) {
+      // Harmonic mode derives a single margin value from base+ratio, so it
+      // is incompatible with per-side margins -- fold back to uniform,
+      // taking the current top value as the starting point.
+      state.margins = state.marginTop;
+      state.independentMargins = false;
+    }
+    update();
+  });
+
+  $("chk-indep-margins").addEventListener("change", () => {
+    const turningOn = $("chk-indep-margins").checked;
+    if (turningOn) {
+      // Remember the uniform value so turning this back off can restore it
+      // exactly, instead of adopting whatever ends up in the Top field.
+      preIndependentMarginsSnapshot = state.margins;
+      // Seed all four sides with the current uniform value, so switching
+      // the mode on doesn't jump the grid to some other size.
+      state.marginTop = state.margins;
+      state.marginRight = state.margins;
+      state.marginBottom = state.margins;
+      state.marginLeft = state.margins;
+    } else if (preIndependentMarginsSnapshot !== null) {
+      // Restore the exact value from before independent mode was turned on.
+      state.margins = clamp(preIndependentMarginsSnapshot, RANGES.margins.min, RANGES.margins.max);
+      preIndependentMarginsSnapshot = null;
+    } else {
+      // Safety fallback (should not normally happen: only reachable if this
+      // mode was turned on some other way, e.g. loading a layout, without
+      // ever going through the "turningOn" branch above).
+      state.margins = clamp(state.marginTop, RANGES.margins.min, RANGES.margins.max);
+    }
+    state.independentMargins = turningOn;
     update();
   });
 
@@ -2182,6 +2305,18 @@ function syncControlsFromState() {
   $("gutt").value = state.gutter; $("gutt-val").value = state.gutter;
   $("doc-w").value = state.docW; $("doc-h").value = state.docH;
   $("unit").value = state.unit;
+
+  // Independent margins
+  $("chk-indep-margins").checked = state.independentMargins;
+  $("marg-top").value = state.marginTop; $("marg-top-val").value = state.marginTop;
+  $("marg-right").value = state.marginRight; $("marg-right-val").value = state.marginRight;
+  $("marg-bottom").value = state.marginBottom; $("marg-bottom-val").value = state.marginBottom;
+  $("marg-left").value = state.marginLeft; $("marg-left-val").value = state.marginLeft;
+  $("indep-margins-controls").classList.toggle("is-hidden", !state.independentMargins);
+  $("marg-field").classList.toggle("is-hidden", state.independentMargins);
+  // Incompatible with harmonic mode (which derives a single margin value)
+  $("chk-indep-margins").disabled = state.harmonicMode;
+  $("chk-indep-margins-wrap").classList.toggle("field--locked", state.harmonicMode);
 
   // Harmonic mode
   $("chk-harmonic").checked = state.harmonicMode;
@@ -2241,6 +2376,9 @@ function exportJSON() {
     docW: state.docW, docH: state.docH, unit: state.unit,
     cols: state.cols, rows: state.rows,
     margins: state.margins, gutter: state.gutter,
+    independentMargins: state.independentMargins,
+    marginTop: state.marginTop, marginRight: state.marginRight,
+    marginBottom: state.marginBottom, marginLeft: state.marginLeft,
     harmonicMode: state.harmonicMode, harmonicRatio: state.harmonicRatio,
     harmonicBase: state.harmonicBase, showBaseline: state.showBaseline,
     version: VERSION
@@ -2274,6 +2412,14 @@ function importJSON(file) {
       state.unit = data.unit;
       if (typeof data.docW === "number" && data.docW > 0) state.docW = data.docW;
       if (typeof data.docH === "number" && data.docH > 0) state.docH = data.docH;
+
+      // Independent margins are optional: JSON from earlier versions won't
+      // have them, and the grid still imports fine in uniform mode.
+      state.independentMargins = data.independentMargins === true;
+      state.marginTop = typeof data.marginTop === "number" ? clamp(data.marginTop, RANGES.margins.min, RANGES.margins.max) : state.margins;
+      state.marginRight = typeof data.marginRight === "number" ? clamp(data.marginRight, RANGES.margins.min, RANGES.margins.max) : state.margins;
+      state.marginBottom = typeof data.marginBottom === "number" ? clamp(data.marginBottom, RANGES.margins.min, RANGES.margins.max) : state.margins;
+      state.marginLeft = typeof data.marginLeft === "number" ? clamp(data.marginLeft, RANGES.margins.min, RANGES.margins.max) : state.margins;
 
       // Harmonic mode fields are optional: JSON exported from v1.x simply
       // won't have them, and the grid still imports fine without it.
@@ -2330,7 +2476,7 @@ function setLang(lang) {
   });
   // Update unit selector options (hardcoded HTML, not covered by data-i18n)
   const unitMap = { mm: "unitMM", cm: "unitCM", in: "unitIN", pt: "unitPT", px: "unitPX" };
-  document.querySelectorAll("#unit option").forEach(opt => {
+  document.querySelectorAll("#unit option, #scale-unit option").forEach(opt => {
     const key = unitMap[opt.value];
     if (key) opt.textContent = t(key);
   });
@@ -2431,6 +2577,10 @@ function init() {
   bindSliderPair("cols", "cols-val", "cols", RANGES.cols);
   bindSliderPair("rows", "rows-val", "rows", RANGES.rows);
   bindSliderPair("marg", "marg-val", "margins", RANGES.margins);
+  bindSliderPair("marg-top", "marg-top-val", "marginTop", RANGES.margins);
+  bindSliderPair("marg-right", "marg-right-val", "marginRight", RANGES.margins);
+  bindSliderPair("marg-bottom", "marg-bottom-val", "marginBottom", RANGES.margins);
+  bindSliderPair("marg-left", "marg-left-val", "marginLeft", RANGES.margins);
   bindSliderPair("gutt", "gutt-val", "gutter", RANGES.gutter);
   bindDocSize();
   bindHarmonicMode();

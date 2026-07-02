@@ -17,7 +17,7 @@ Available as a **web app**, an **Adobe Illustrator script**, and an **Affinity s
 | Affinity (English) | `scripts/affinity/swiss_grid_generator_en.js` | Affinity (April 2026+) with MCP |
 | Affinity (Español) | `scripts/affinity/swiss_grid_generator_es.js` | Affinity (April 2026+) with MCP |
 
-**Current versions:** Web app `v1.2` · Illustrator `v1.2` · Affinity `v1.2` · Harmonic Scale snap (Affinity) `v1.0`
+**Current versions:** Web app `v1.3` · Illustrator `v1.2` · Affinity `v1.2` · Harmonic Scale snap (Affinity) `v1.0`
 
 ---
 
@@ -34,6 +34,7 @@ Open `index.html` directly in any browser. No dependencies, no build step, no se
 - Save, apply, and delete your own custom layouts (stored locally in the browser)
 - Editable Module W / Module H — type a target module size and the margin solves for it
 - **Harmonic mode:** lock margin, gutter and an optional baseline grid to a single base value and a master ratio (Phi, √2, 3:2, 4:3, 5:4, 2:1, or a custom value) — a modular scale for the grid itself
+- **Independent per-side margins:** set Top/Right/Bottom/Left margins individually instead of one uniform value — useful for magazine/book spreads with distinct inner (gutter) and outer margins. Mutually exclusive with Harmonic mode, which derives a single margin value
 - **Harmonic Scale calculator:** generate a reference scale (font size, stroke weight, spacing) in the same ratio, with one-click copy — pairs with the companion Affinity script below
 - Export as SVG with named layer groups — compatible with Illustrator, Affinity, and Inkscape
 - Import / export settings as JSON
@@ -139,7 +140,7 @@ The exported SVG uses named `<g>` groups for cross-app compatibility:
 
 ```
 swiss-grid-explorer/
-├── index.html                                    ← Web app (v1.2)
+├── index.html                                    ← Web app (v1.3)
 ├── README.md
 ├── LICENSE
 └── scripts/
