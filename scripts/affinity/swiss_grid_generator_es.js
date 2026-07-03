@@ -48,13 +48,16 @@ if (!doc) {
   const colsCombo = grpGrid.addComboBox('Columnas', COL_OPTIONS.map(String), COL_OPTIONS.indexOf(8));
   const rowsCombo = grpGrid.addComboBox('Filas',    ROW_OPTIONS.map(String), ROW_OPTIONS.indexOf(8));
   const margEdit  = grpGrid.addUnitValueEditor('Márgenes', UnitType.Pixel, UnitType.Millimetre, 12 * mmToPx, 0, null);
+  margEdit.value = 12 * mmToPx; // workaround: bug del SDK de Affinity resetea el valor a 0 cuando maxValue es null
   const guttEdit  = grpGrid.addUnitValueEditor('Medianil', UnitType.Pixel, UnitType.Millimetre,  4 * mmToPx, 0, null);
+  guttEdit.value = 4 * mmToPx; // workaround: mismo bug del SDK
 
   const grpOpts  = col1.addGroup('Generar');
   const chkOuter = grpOpts.addCheckBox('Márgenes exteriores', true);
   const chkInner = grpOpts.addCheckBox('Guías interiores',    true);
   const chkBase  = grpOpts.addCheckBox('Retícula base',       false);
   const baseEdit = grpOpts.addUnitValueEditor('Espaciado base', UnitType.Pixel, UnitType.Millimetre, 5 * mmToPx, 0.5 * mmToPx, null);
+  baseEdit.value = 5 * mmToPx; // workaround: mismo bug del SDK
   baseEdit.isEnabled = false;
 
   const grpHarmonic  = col1.addGroup('Modo armónico');
@@ -69,6 +72,7 @@ if (!doc) {
   ], 0);
   ratioCombo.isEnabled = false;
   const harmBaseEdit = grpHarmonic.addUnitValueEditor('Unidad base', UnitType.Pixel, UnitType.Millimetre, 8 * mmToPx, 0.5 * mmToPx, null);
+  harmBaseEdit.value = 8 * mmToPx; // workaround: mismo bug del SDK -- esto era la causa raíz de que Modo Armónico "no hiciera nada"
   harmBaseEdit.isEnabled = false;
 
   const grpPresets  = col2.addGroup('Presets icónicas');

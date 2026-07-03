@@ -48,13 +48,16 @@ if (!doc) {
   const colsCombo = grpGrid.addComboBox('Columns', COL_OPTIONS.map(String), COL_OPTIONS.indexOf(8));
   const rowsCombo = grpGrid.addComboBox('Rows',    ROW_OPTIONS.map(String), ROW_OPTIONS.indexOf(8));
   const margEdit  = grpGrid.addUnitValueEditor('Margins', UnitType.Pixel, UnitType.Millimetre, 12 * mmToPx, 0, null);
+  margEdit.value = 12 * mmToPx; // workaround: Affinity SDK bug resets value to 0 when maxValue is null
   const guttEdit  = grpGrid.addUnitValueEditor('Gutter',  UnitType.Pixel, UnitType.Millimetre,  4 * mmToPx, 0, null);
+  guttEdit.value = 4 * mmToPx; // workaround: same SDK bug
 
   const grpOpts  = col1.addGroup('Generate');
   const chkOuter = grpOpts.addCheckBox('Outer margins', true);
   const chkInner = grpOpts.addCheckBox('Inner guides',  true);
   const chkBase  = grpOpts.addCheckBox('Baseline grid', false);
   const baseEdit = grpOpts.addUnitValueEditor('Baseline spacing', UnitType.Pixel, UnitType.Millimetre, 5 * mmToPx, 0.5 * mmToPx, null);
+  baseEdit.value = 5 * mmToPx; // workaround: same SDK bug
   baseEdit.isEnabled = false;
 
   const grpHarmonic  = col1.addGroup('Harmonic Mode');
@@ -69,6 +72,7 @@ if (!doc) {
   ], 0);
   ratioCombo.isEnabled = false;
   const harmBaseEdit = grpHarmonic.addUnitValueEditor('Base unit', UnitType.Pixel, UnitType.Millimetre, 8 * mmToPx, 0.5 * mmToPx, null);
+  harmBaseEdit.value = 8 * mmToPx; // workaround: same SDK bug -- this was the root cause of Harmonic Mode "doing nothing"
   harmBaseEdit.isEnabled = false;
 
   const grpPresets  = col2.addGroup('Iconic Presets');
