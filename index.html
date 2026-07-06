@@ -937,6 +937,13 @@
             <option value="px">PX · píxeles</option>
           </select>
         </div>
+
+        <div class="layouts-divider" data-i18n="mySizes">Mis tamaños</div>
+        <div class="layout-save-row">
+          <input class="layout-name-input" id="size-name" type="text" maxlength="40" data-i18n-placeholder="sizeNamePlaceholder" placeholder="Nombre del tamaño">
+          <button class="btn" id="btn-save-size" data-i18n="saveSize">Guardar</button>
+        </div>
+        <div class="layout-list" id="size-list"></div>
       </div>
 
       <div class="section">
@@ -1308,6 +1315,13 @@ const i18n = {
     toastLayoutSaved: "Layout guardado", toastLayoutUpdated: "Layout actualizado",
     toastLayoutApplied: "Layout aplicado", toastLayoutDeleted: "Layout eliminado",
     toastModuleClamped: "Margen ajustado al límite posible",
+    mySizes: "Mis tamaños", sizeNamePlaceholder: "Nombre del tamaño",
+    saveSize: "Guardar", sizesEmpty: "Todavía no guardaste ningún tamaño.",
+    deleteSize: "Eliminar tamaño",
+    toastSizeNameRequired: "Escribí un nombre para el tamaño",
+    toastSizeSaveError: "No se pudo guardar (localStorage no disponible)",
+    toastSizeSaved: "Tamaño guardado", toastSizeUpdated: "Tamaño actualizado",
+    toastSizeApplied: "Tamaño aplicado", toastSizeDeleted: "Tamaño eliminado",
     scale: "Escala armónica", scaleBase: "Base",
     scaleStepsDown: "Pasos abajo", scaleStepsUp: "Pasos arriba",
     copyScale: "Copiar escala", copyShort: "copiar",
@@ -1359,6 +1373,13 @@ const i18n = {
     toastLayoutSaved: "Layout saved", toastLayoutUpdated: "Layout updated",
     toastLayoutApplied: "Layout applied", toastLayoutDeleted: "Layout deleted",
     toastModuleClamped: "Margin clamped to the closest possible value",
+    mySizes: "My sizes", sizeNamePlaceholder: "Size name",
+    saveSize: "Save", sizesEmpty: "No saved sizes yet.",
+    deleteSize: "Delete size",
+    toastSizeNameRequired: "Enter a name for the size",
+    toastSizeSaveError: "Couldn't save (localStorage unavailable)",
+    toastSizeSaved: "Size saved", toastSizeUpdated: "Size updated",
+    toastSizeApplied: "Size applied", toastSizeDeleted: "Size deleted",
     scale: "Harmonic scale", scaleBase: "Base",
     scaleStepsDown: "Steps down", scaleStepsUp: "Steps up",
     copyScale: "Copy scale", copyShort: "copy",
@@ -1877,6 +1898,7 @@ function applyPreset(p) {
 // Custom layouts (saved locally in the browser)                   //
 // -------------------------------------------------------------- //
 const LAYOUTS_KEY = "sge_custom_layouts";
+const SIZES_KEY = "sge_custom_sizes";
 
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1964,6 +1986,110 @@ function deleteLayout(name) {
   saveLayoutsToStorage(loadLayouts().filter(l => l.name !== name));
   renderLayoutList();
   toast(t("toastLayoutDeleted"));
+}
+
+// -------------------------------------------------------------- //
+// Custom document sizes -- lighter-weight than My Layouts: only    //
+// remembers width/height/unit, not the whole grid configuration.   //
+// Useful for a page size you reuse often (e.g. a business card)    //
+// without wanting to save/overwrite a full layout for it.          //
+// -------------------------------------------------------------- //
+function loadCustomSizes() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SIZES_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCustomSizesToStorage(sizes) {
+  try {
+    localStorage.setItem(SIZES_KEY, JSON.stringify(sizes));
+    return true;
+  } catch (e) {
+    return false; // private/incognito mode, storage full, or disabled -- fail soft
+  }
+}
+
+function saveCurrentSize() {
+  const nameInput = $("size-name");
+  const name = nameInput.value.trim();
+  if (!name) {
+    toast(t("toastSizeNameRequired"), true);
+    nameInput.focus();
+    return;
+  }
+  const sizes = loadCustomSizes();
+  const snapshot = {
+    name,
+    docW: state.docW, docH: state.docH, unit: state.unit,
+    savedAt: Date.now()
+  };
+  const existingIdx = sizes.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+  const isUpdate = existingIdx >= 0;
+  if (isUpdate) sizes[existingIdx] = snapshot;
+  else sizes.unshift(snapshot);
+
+  if (!saveCustomSizesToStorage(sizes)) {
+    toast(t("toastSizeSaveError"), true);
+    return;
+  }
+  nameInput.value = "";
+  renderCustomSizesList();
+  toast(isUpdate ? t("toastSizeUpdated") : t("toastSizeSaved"));
+}
+
+function applyCustomSize(size) {
+  state.docW = size.docW;
+  state.docH = size.docH;
+  state.unit = size.unit;
+  setFormat("custom", false);
+  update();
+  toast(t("toastSizeApplied"));
+}
+
+function deleteCustomSize(name) {
+  saveCustomSizesToStorage(loadCustomSizes().filter(s => s.name !== name));
+  renderCustomSizesList();
+  toast(t("toastSizeDeleted"));
+}
+
+function renderCustomSizesList() {
+  const c = $("size-list");
+  const sizes = loadCustomSizes();
+  c.innerHTML = "";
+
+  if (sizes.length === 0) {
+    const hint = document.createElement("p");
+    hint.className = "layout-empty-hint";
+    hint.textContent = t("sizesEmpty");
+    c.appendChild(hint);
+    return;
+  }
+
+  sizes.forEach(s => {
+    const row = document.createElement("div");
+    row.className = "layout-item";
+
+    const left = document.createElement("div");
+    left.style.minWidth = "0";
+    left.style.overflow = "hidden";
+    left.innerHTML =
+      `<div class="layout-item__name">${escapeHtml(s.name)}</div>` +
+      `<div class="layout-item__meta">${s.docW}×${s.docH} ${s.unit}</div>`;
+
+    const del = document.createElement("button");
+    del.className = "layout-item__delete";
+    del.innerHTML = "&times;";
+    del.title = t("deleteSize");
+    del.onclick = e => { e.stopPropagation(); deleteCustomSize(s.name); };
+
+    row.appendChild(left);
+    row.appendChild(del);
+    row.onclick = () => applyCustomSize(s);
+    c.appendChild(row);
+  });
 }
 
 function renderLayoutList() {
@@ -2483,6 +2609,7 @@ function setLang(lang) {
   $("btn-swap-orientation").title = t("swapOrientation");
   renderPresets();
   renderLayoutList();
+  renderCustomSizesList();
   renderScale();
   updateStats();
 }
@@ -2587,9 +2714,12 @@ function init() {
   $("btn-swap-orientation").onclick = swapOrientation;
   $("btn-save-layout").onclick = saveCurrentLayout;
   $("layout-name").addEventListener("keydown", e => { if (e.key === "Enter") saveCurrentLayout(); });
+  $("btn-save-size").onclick = saveCurrentSize;
+  $("size-name").addEventListener("keydown", e => { if (e.key === "Enter") saveCurrentSize(); });
   $("stat-w").addEventListener("change", solveModuleW);
   $("stat-h").addEventListener("change", solveModuleH);
   renderLayoutList();
+  renderCustomSizesList();
   bindScale();
   renderScale();
 
