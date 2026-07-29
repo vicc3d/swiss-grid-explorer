@@ -17,7 +17,7 @@ Available as a **web app**, an **Adobe Illustrator script**, and an **Affinity s
 | Affinity (English) | `scripts/affinity/swiss_grid_generator_en.js` | Affinity (April 2026+) with MCP |
 | Affinity (Español) | `scripts/affinity/swiss_grid_generator_es.js` | Affinity (April 2026+) with MCP |
 
-**Current versions:** Web app `v1.3` · Illustrator `v1.2` · Affinity `v1.2` · Harmonic Scale snap (Affinity) `v1.0`
+**Current versions:** Web app `v1.3` · Illustrator `v1.2` · Affinity `v1.3` · Harmonic Scale snap (Affinity) `v1.0`
 
 ---
 
@@ -88,8 +88,14 @@ Two versions available — same functionality, different interface language.
 - Generates native guides directly on the document (no layers or vector objects)
 - 6 iconic presets that adapt proportionally to any page size
 - **Harmonic mode (v1.2):** lock margin and gutter — and the baseline grid, if enabled — to a base value and a master ratio (Phi, √2, 3:2, 4:3, 5:4, or 2:1)
+- **Artboard support (v1.3):** in a multi-artboard document, the grid is built into the artboard you have selected
+- **Readout unit (v1.3):** display calculated values in mm, cm or px, independently of the document unit
 - Single undo step for the entire grid (`CompoundCommandBuilder`)
 - Optional baseline grid
+
+> Artboard support and the readout unit selector were contributed by [olliollio](https://github.com/olliollio) (analog digitalagentur).
+
+> **Artboard note:** Affinity attaches new guides to whichever artboard is selected, and that ownership controls both visibility and how horizontal guides are clipped. Since the SDK can't set artboard focus, the script uses the artboard you have selected rather than offering a picker — select the artboard first, then run it.
 
 > **Master Spread note:** the Affinity SDK cannot switch to a Master Spread programmatically. To apply guides to a master, switch to that tab manually before running the script.
 
@@ -147,8 +153,8 @@ swiss-grid-explorer/
     ├── illustrator/
     │   └── swiss_grid_explorer.jsx               ← Illustrator script (v1.2)
     └── affinity/
-        ├── swiss_grid_generator_en.js            ← Affinity script — English (v1.2)
-        ├── swiss_grid_generator_es.js            ← Affinity script — Español (v1.2)
+        ├── swiss_grid_generator_en.js            ← Affinity script — English (v1.3)
+        ├── swiss_grid_generator_es.js            ← Affinity script — Español (v1.3)
         ├── harmonic_scale_snap_en.js             ← Companion: snap font size — English (v1.0)
         └── harmonic_scale_snap_es.js             ← Companion: snap font size — Español (v1.0)
 ```

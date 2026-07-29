@@ -1,3 +1,10 @@
+/**
+ * name: swiss_grid_generator_es
+ * description: Generador de reticulas parametricas para Affinity Designer/Publisher/Photo -- columnas, filas, margenes, medianil, presets iconicos y modo armonico. Dibuja en el artboard seleccionado en documentos con varios artboards.
+ * version: 1.3.0
+ * author: Victor Crespo (3dvic.com · github.com/vicc3d)
+ * contributors: olliollio (analog digitalagentur) -- soporte de artboard y unidad de lectura
+ */
 'use strict';
 
 const { Document } = require('/document');
@@ -5,23 +12,122 @@ const { Dialog, DialogResult } = require('/dialog');
 const { UnitType } = require('/units');
 const { DocumentCommand, CompoundCommandBuilder } = require('/commands');
 
-const VERSION = 'v1.2';
+const VERSION = 'v1.3';
 
 const RATIO_VALUES = [1.618, 1.414, 1.5, 1.333, 1.25, 2];
 
 const doc = Document.current;
 if (!doc) {
-  console.log('[Swiss Grid] No hay documento abierto.');
+  console.log('[Swiss Grid] No document open.');
 } else {
 
   const dpi    = doc.dpi;
-  const W      = doc.widthPixels;
-  const H      = doc.heightPixels;
   const conv   = doc.unitValueConverter;
   const mmToPx = conv.getConversionFactor(UnitType.Millimetre, UnitType.Pixel);
   const pxToMm = 1 / mmToPx;
 
-  console.log('[Swiss Grid] Doc: ' + (W*pxToMm).toFixed(1) + 'x' + (H*pxToMm).toFixed(1) + ' mm @ ' + dpi + 'dpi');
+  // ---------------------------------------------------------------------------
+  // Display units. All internal geometry stays in pixels; only the readout
+  // (module size, artboard labels, log) is converted to the chosen unit.
+  // Point is deliberately excluded: getConversionFactor(px, Point) returns 1
+  // here regardless of dpi, which would be misleading. mm / cm / px are exact.
+  // ---------------------------------------------------------------------------
+  const UNIT_DEFS = [
+    { name: 'mm', type: UnitType.Millimetre, dec: 2 },
+    { name: 'cm', type: UnitType.Centimetre, dec: 3 },
+    { name: 'px', type: UnitType.Pixel,      dec: 0 },
+  ];
+  for (const u of UNIT_DEFS) {
+    u.pxTo = conv.getConversionFactor(UnitType.Pixel, u.type);
+  }
+  // Default to the document's own unit when it is one we offer, else mm.
+  let unitDefaultIdx = UNIT_DEFS.findIndex(u => String(u.name) === String(doc.units).toLowerCase().slice(0, 2));
+  if (String(doc.units) === 'Pixel') unitDefaultIdx = UNIT_DEFS.findIndex(u => u.name === 'px');
+  if (unitDefaultIdx < 0) unitDefaultIdx = 0;
+
+  // Active unit -- set from the dropdown; used by every readout below.
+  let U = UNIT_DEFS[unitDefaultIdx];
+  function fmt(px) { return (px * U.pxTo).toFixed(U.dec); }
+
+  // The input-field display unit is fixed at creation time -- its `units`
+  // property is read-only, so it cannot follow the dropdown live. We set it
+  // once to the document's own unit, which is what the user works in.
+  const FIELD_UNIT = UNIT_DEFS[unitDefaultIdx].type;
+
+  // ---------------------------------------------------------------------------
+  // Artboard target.
+  //
+  // Guides are placed at ABSOLUTE spread coordinates, but Affinity assigns
+  // ownership of a new guide to whichever artboard currently has UI focus --
+  // and that ownership controls both whether the guide is visible (it only
+  // shows while its owning artboard is selected) and how horizontal guides
+  // are clipped. There is no API to set artboard focus, so a script cannot
+  // target an artboard other than the one the user has selected without
+  // producing guides that render across the wrong artboard and stay hidden.
+  //
+  // Therefore the target is DERIVED from the current selection rather than
+  // chosen from a list: whatever artboard the user has selected (or the one
+  // containing the selected object) is the artboard we draw into, which
+  // guarantees target and owner always coincide.
+  //
+  // Detection notes: node.artboardInterface is non-null on every node, and
+  // node.artboardDescription/artboardSpreadBaseBox describe the node itself,
+  // not its containing artboard -- so neither can be used to identify an
+  // artboard. The reliable test is artboardInterface.isArtboardEnabled.
+  // ---------------------------------------------------------------------------
+  function findSelectedArtboard() {
+    const sel = doc.selection;
+    if (!sel || sel.length === 0) return null;
+    for (let i = 0; i < sel.length; i++) {
+      let node = null;
+      try { node = sel.at(i).node; } catch (e) { continue; }
+      // Walk up from the selected node: the user may have clicked an object
+      // inside an artboard rather than the artboard itself.
+      let depth = 0;
+      while (node && depth < 12) {
+        const ai = node.artboardInterface;
+        if (ai && ai.isArtboardEnabled === true) {
+          const box = ai.spreadBaseBox;
+          const desc = (ai.description && String(ai.description).trim()) ? String(ai.description).trim() : 'Artboard';
+          return { x: box.x, y: box.y, w: box.width, h: box.height, desc: desc };
+        }
+        node = node.parent;
+        depth++;
+      }
+    }
+    return null;
+  }
+
+  const hasArtboards = !!(doc.hasArtboards && doc.artboards && doc.artboards.length);
+  const selectedArtboard = hasArtboards ? findSelectedArtboard() : null;
+
+  if (hasArtboards && !selectedArtboard) {
+    const warn = Dialog.create('Swiss Grid Explorer ' + VERSION);
+    warn.initialWidth = 420;
+    const wcol = warn.addColumn();
+    const wgrp = wcol.addGroup('');
+    const l1 = wgrp.addStaticText('Este documento tiene artboards, pero no hay ninguno seleccionado.', '');
+    l1.isFullWidth = true;
+    const l2 = wgrp.addStaticText('Selecciona el artboard donde quieres la reticula y ejecuta el script de nuevo.', '');
+    l2.isFullWidth = true;
+    const l3 = wgrp.addStaticText('(Affinity asocia las guias nuevas al artboard seleccionado, por eso la reticula debe construirse sobre el que tengas activo.)', '');
+    l3.isFullWidth = true;
+    warn.runModal();
+    console.log('[Swiss Grid] Aborted: document has artboards but none selected.');
+    throw new Error('No artboard selected');
+  }
+
+  const TARGET = selectedArtboard || {
+    x: 0, y: 0, w: doc.widthPixels, h: doc.heightPixels, desc: 'Documento completo'
+  };
+
+  const X = TARGET.x;
+  const Y = TARGET.y;
+  const W = TARGET.w;
+  const H = TARGET.h;
+
+  console.log('[Swiss Grid] Target: ' + TARGET.desc + ' -- '
+    + (W * pxToMm).toFixed(1) + 'x' + (H * pxToMm).toFixed(1) + ' mm @ ' + dpi + 'dpi');
 
   const PRESETS = [
     null,
@@ -44,38 +150,50 @@ if (!doc) {
   const col2 = dlg.addColumn();
   col2.widthProportion = 1;
 
-  const grpGrid   = col1.addGroup('Retícula');
+  // The target isn't selectable here on purpose -- see the note above the
+  // detection code. It's shown read-only so the user can confirm the grid is
+  // going where they expect before committing.
+  const grpTarget = col1.addGroup('Destino');
+  const targetText = grpTarget.addStaticText('Artboard', TARGET.desc);
+
+  // Display-unit picker. Default follows the document's own unit. Changing it
+  // reformats the readouts (module size, log). Input fields keep the document
+  // unit fixed, since their display unit is read-only and cannot follow live.
+  const grpUnits  = col1.addGroup('Unidades');
+  const unitCombo = grpUnits.addComboBox('Unidad de lectura', UNIT_DEFS.map(u => u.name), unitDefaultIdx);
+
+  const grpGrid   = col1.addGroup('Reticula');
   const colsCombo = grpGrid.addComboBox('Columnas', COL_OPTIONS.map(String), COL_OPTIONS.indexOf(8));
   const rowsCombo = grpGrid.addComboBox('Filas',    ROW_OPTIONS.map(String), ROW_OPTIONS.indexOf(8));
-  const margEdit  = grpGrid.addUnitValueEditor('Márgenes', UnitType.Pixel, UnitType.Millimetre, 12 * mmToPx, 0, null);
-  margEdit.value = 12 * mmToPx; // workaround: bug del SDK de Affinity resetea el valor a 0 cuando maxValue es null
-  const guttEdit  = grpGrid.addUnitValueEditor('Medianil', UnitType.Pixel, UnitType.Millimetre,  4 * mmToPx, 0, null);
-  guttEdit.value = 4 * mmToPx; // workaround: mismo bug del SDK
+  const margEdit  = grpGrid.addUnitValueEditor('Margenes', UnitType.Pixel, FIELD_UNIT, 12 * mmToPx, 0, null);
+  margEdit.value = 12 * mmToPx; // workaround: Affinity SDK bug resets value to 0 when maxValue is null
+  const guttEdit  = grpGrid.addUnitValueEditor('Medianil',  UnitType.Pixel, FIELD_UNIT,  4 * mmToPx, 0, null);
+  guttEdit.value = 4 * mmToPx; // workaround: same SDK bug
 
   const grpOpts  = col1.addGroup('Generar');
-  const chkOuter = grpOpts.addCheckBox('Márgenes exteriores', true);
-  const chkInner = grpOpts.addCheckBox('Guías interiores',    true);
-  const chkBase  = grpOpts.addCheckBox('Retícula base',       false);
-  const baseEdit = grpOpts.addUnitValueEditor('Espaciado base', UnitType.Pixel, UnitType.Millimetre, 5 * mmToPx, 0.5 * mmToPx, null);
-  baseEdit.value = 5 * mmToPx; // workaround: mismo bug del SDK
+  const chkOuter = grpOpts.addCheckBox('Margenes exteriores', true);
+  const chkInner = grpOpts.addCheckBox('Guias interiores',  true);
+  const chkBase  = grpOpts.addCheckBox('Reticula base', false);
+  const baseEdit = grpOpts.addUnitValueEditor('Espaciado base', UnitType.Pixel, FIELD_UNIT, 5 * mmToPx, 0.5 * mmToPx, null);
+  baseEdit.value = 5 * mmToPx; // workaround: same SDK bug
   baseEdit.isEnabled = false;
 
-  const grpHarmonic  = col1.addGroup('Modo armónico');
-  const chkHarmonic  = grpHarmonic.addCheckBox('Vincular margen/medianil a una proporción', false);
-  const ratioCombo   = grpHarmonic.addComboBox('Proporción', [
-    'Phi - Áurea (1.618)',
-    'raíz de 2 (1.414)',
+  const grpHarmonic  = col1.addGroup('Modo armonico');
+  const chkHarmonic  = grpHarmonic.addCheckBox('Vincular margen/medianil a una proporcion', false);
+  const ratioCombo   = grpHarmonic.addComboBox('Proporcion', [
+    'Phi - Aurea (1.618)',
+    'sqrt(2) (1.414)',
     'Quinta - 3:2 (1.5)',
     'Cuarta - 4:3 (1.333)',
     'Tercera mayor - 5:4 (1.25)',
     'Octava - 2:1 (2.0)',
   ], 0);
   ratioCombo.isEnabled = false;
-  const harmBaseEdit = grpHarmonic.addUnitValueEditor('Unidad base', UnitType.Pixel, UnitType.Millimetre, 8 * mmToPx, 0.5 * mmToPx, null);
-  harmBaseEdit.value = 8 * mmToPx; // workaround: mismo bug del SDK -- esto era la causa raíz de que Modo Armónico "no hiciera nada"
+  const harmBaseEdit = grpHarmonic.addUnitValueEditor('Unidad base', UnitType.Pixel, FIELD_UNIT, 8 * mmToPx, 0.5 * mmToPx, null);
+  harmBaseEdit.value = 8 * mmToPx; // workaround: same SDK bug -- this was the root cause of Harmonic Mode "doing nothing"
   harmBaseEdit.isEnabled = false;
 
-  const grpPresets  = col2.addGroup('Presets icónicas');
+  const grpPresets  = col2.addGroup('Reticulas iconicas');
   const presetCombo = grpPresets.addComboBox('Preset', [
     '- ninguno -',
     'Brockmann  8x8',
@@ -86,13 +204,19 @@ if (!doc) {
     'Slides 4x3',
   ], 0);
 
-  const grpInfo   = col2.addGroup('Módulo calculado');
-  const infoSize  = grpInfo.addStaticText('Tamaño',     '-');
-  const infoRatio = grpInfo.addStaticText('Proporción', '-');
-  const infoCnt   = grpInfo.addStaticText('Total',      '-');
+  const grpInfo   = col2.addGroup('Modulo calculado');
+  const infoSize  = grpInfo.addStaticText('Tamano',  '-');
+  const infoRatio = grpInfo.addStaticText('Proporcion', '-');
+  const infoCnt   = grpInfo.addStaticText('Total', '-');
 
   function getCols() { return COL_OPTIONS[colsCombo.selectedIndex]; }
   function getRows() { return ROW_OPTIONS[rowsCombo.selectedIndex]; }
+
+  // Target geometry is fixed for the run (it comes from the selection), so
+  // this only needs to refresh the active display unit.
+  function syncUnit() {
+    U = UNIT_DEFS[unitCombo.selectedIndex] || UNIT_DEFS[0];
+  }
 
   function updateInfo() {
     const cols = getCols(), rows = getRows();
@@ -100,11 +224,11 @@ if (!doc) {
     const modW = (W - 2*m - (cols - 1)*g) / cols;
     const modH = (H - 2*m - (rows - 1)*g) / rows;
     if (modW > 0 && modH > 0) {
-      infoSize.text  = (modW * pxToMm).toFixed(2) + ' x ' + (modH * pxToMm).toFixed(2) + ' mm';
+      infoSize.text  = fmt(modW) + ' x ' + fmt(modH) + ' ' + U.name;
       infoRatio.text = (modW / modH).toFixed(3);
-      infoCnt.text   = (cols * rows) + ' módulos';
+      infoCnt.text   = (cols * rows) + ' modulos';
     } else {
-      infoSize.text  = 'Márgenes excesivos';
+      infoSize.text  = 'Margenes excesivos';
       infoRatio.text = '-';
       infoCnt.text   = '-';
     }
@@ -117,61 +241,64 @@ if (!doc) {
     const modH = (H - 2*m - (rows - 1)*g) / rows;
     if (modW <= 0 || modH <= 0) return null;
 
+    // All guide coordinates are in document space, so every position is
+    // offset by the frame origin (X for vertical guides, Y for horizontal).
     const cmds = [];
     if (chkOuter.value) {
-      cmds.push(DocumentCommand.createAddGuide(false, m));
-      cmds.push(DocumentCommand.createAddGuide(false, W - m));
-      cmds.push(DocumentCommand.createAddGuide(true,  m));
-      cmds.push(DocumentCommand.createAddGuide(true,  H - m));
+      cmds.push(DocumentCommand.createAddGuide(false, X + m));
+      cmds.push(DocumentCommand.createAddGuide(false, X + W - m));
+      cmds.push(DocumentCommand.createAddGuide(true,  Y + m));
+      cmds.push(DocumentCommand.createAddGuide(true,  Y + H - m));
     }
     if (chkInner.value) {
       let x = m;
       for (let c = 0; c < cols - 1; c++) {
-        x += modW; cmds.push(DocumentCommand.createAddGuide(false, x));
-        x += g;    cmds.push(DocumentCommand.createAddGuide(false, x));
+        x += modW; cmds.push(DocumentCommand.createAddGuide(false, X + x));
+        x += g;    cmds.push(DocumentCommand.createAddGuide(false, X + x));
       }
       let y = m;
       for (let r = 0; r < rows - 1; r++) {
-        y += modH; cmds.push(DocumentCommand.createAddGuide(true, y));
-        y += g;    cmds.push(DocumentCommand.createAddGuide(true, y));
+        y += modH; cmds.push(DocumentCommand.createAddGuide(true, Y + y));
+        y += g;    cmds.push(DocumentCommand.createAddGuide(true, Y + y));
       }
     }
     if (chkBase.value && baseEdit.value > 0) {
       const step = baseEdit.value;
       let count = 0;
       for (let y = step; y < H && count < 300; y += step, count++) {
-        cmds.push(DocumentCommand.createAddGuide(true, y));
+        cmds.push(DocumentCommand.createAddGuide(true, Y + y));
       }
     }
     return cmds;
   }
 
-  // Deriva margen, medianil y (opcionalmente) el espaciado de la retícula base
-  // a partir de una unidad base y una proporción maestra: medianil = base,
-  // margen = base x proporción, retícula base = base / proporción. Misma
-  // lógica de escala modular que el modo armónico del web app.
-  // Guarda el margen/medianil de justo antes de activar el modo armónico,
-  // para poder restaurarlos al desactivarlo en vez de dejar los valores
-  // derivados de la proporción permanentemente.
+  // Holds margin/gutter from just before harmonic mode was switched on, so
+  // switching it back off can restore them instead of leaving the
+  // harmonic-derived numbers in place permanently.
   let lastHarmonicOn = false;
   let preHarmonicSnapshot = null;
 
+  // Derives margin, gutter and (optionally) baseline spacing from a single
+  // base value and a master ratio, the same modular-scale logic used by the
+  // web app's harmonic mode: gutter = base, margin = base x ratio, baseline
+  // = base / ratio. Margin/gutter fields are locked (read-only) while this
+  // is on, since their value is computed rather than entered by hand.
   function applyHarmonic() {
     const on = chkHarmonic.value;
 
     if (on && !lastHarmonicOn) {
       preHarmonicSnapshot = { margin: margEdit.value, gutter: guttEdit.value };
     } else if (!on && lastHarmonicOn) {
-      // Recién se desactivó. Si fue por aplicar un preset icónico (que trae
-      // su propio margen/medianil deliberado), ese valor gana -- no lo
-      // pisamos con la foto manual anterior.
+      // Just turned off. If an iconic preset caused this (it sets its own
+      // deliberate margin/gutter), that value wins -- don't clobber it with
+      // the older manual snapshot.
       if (preHarmonicSnapshot && !applyingPreset) {
         const halfMm = 0.5 * mmToPx;
         const cols = getCols(), rows = getRows();
         const fits = (m, g) => (W - 2*m - (cols-1)*g)/cols > 0 && (H - 2*m - (rows-1)*g)/rows > 0;
         let m = preHarmonicSnapshot.margin, g = preHarmonicSnapshot.gutter, attempts = 0;
-        // Cols/filas/tamaño pueden haber cambiado mientras estaba activo --
-        // revalidamos que los valores restaurados sigan entrando en la grilla.
+        // Cols/rows/frame size may have changed while harmonic mode was on --
+        // revalidate the restored values still produce a fitting grid.
         while (!fits(m, g) && attempts < 30) {
           m = Math.round(m * 0.8 / halfMm) * halfMm;
           g = Math.max(halfMm, Math.round(g * 0.8 / halfMm) * halfMm);
@@ -214,8 +341,31 @@ if (!doc) {
     }
   }
 
+  // Fingerprint of every input that actually changes guide geometry. The
+  // readout unit is deliberately NOT included: changing it only reformats
+  // text, so there's no reason to tear down and rebuild the preview (which
+  // can be several hundred guide commands at 32x32 with a baseline grid).
+  let lastGeomKey = null;
+  function geomKey() {
+    return [
+      getCols(), getRows(),
+      margEdit.value, guttEdit.value,
+      chkOuter.value, chkInner.value, chkBase.value,
+      baseEdit.value,
+    ].join('|');
+  }
+
   function runPreview() {
-    applyHarmonic();
+    syncUnit();
+    applyHarmonic(); // may rewrite margin/gutter, so read the key after it
+
+    const key = geomKey();
+    if (key === lastGeomKey) {
+      updateInfo(); // unit-only change: refresh the readout, keep the preview
+      return;
+    }
+    lastGeomKey = key;
+
     doc.clearPreviews();
     const cmds = buildCmds();
     if (!cmds || cmds.length === 0) { updateInfo(); return; }
@@ -238,8 +388,8 @@ if (!doc) {
       m = Math.round(m * 0.8 / halfMm) * halfMm;
       g = Math.max(halfMm, Math.round(g * 0.8 / halfMm) * halfMm);
     }
-    // Un preset icónico es una elección manual y deliberada de margen/medianil,
-    // así que tiene prioridad sobre el modo armónico para esta corrida.
+    // An iconic preset is a deliberate manual choice of margin/gutter
+    // character, so it takes precedence over harmonic mode for this run.
     chkHarmonic.value = false;
     const ci = COL_OPTIONS.indexOf(p.cols);
     const ri = ROW_OPTIONS.indexOf(p.rows);
@@ -271,6 +421,7 @@ if (!doc) {
   runPreview();
 
   if (dlg.runModal() === DialogResult.Ok) {
+    syncUnit();
     doc.clearPreviews();
     const cmds = buildCmds();
     if (cmds && cmds.length > 0) {
@@ -279,13 +430,14 @@ if (!doc) {
       doc.executeCommand(builder.createCommand());
       const cols = getCols(), rows = getRows();
       const m = margEdit.value, g = guttEdit.value;
-      const modW = ((W - 2*m - (cols-1)*g) / cols * pxToMm).toFixed(2);
-      const modH = ((H - 2*m - (rows-1)*g) / rows * pxToMm).toFixed(2);
-      console.log('[Swiss Grid] OK ' + cmds.length + ' guías | ' + cols + 'x' + rows + ' | módulo ' + modW + 'x' + modH + ' mm');
+      const modW = fmt((W - 2*m - (cols-1)*g) / cols);
+      const modH = fmt((H - 2*m - (rows-1)*g) / rows);
+      const tgt = ' | ' + TARGET.desc;
+      console.log('[Swiss Grid] OK ' + cmds.length + ' guides | ' + cols + 'x' + rows + ' | module ' + modW + 'x' + modH + ' ' + U.name + tgt);
     }
   } else {
     doc.clearPreviews();
-    console.log('[Swiss Grid] Cancelado.');
+    console.log('[Swiss Grid] Cancelled.');
   }
 
 }
