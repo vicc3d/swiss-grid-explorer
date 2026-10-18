@@ -2,7 +2,7 @@
 /*
  * Escala armónica — Ajustar tamaño de fuente (v1.0, Español)
  *
- * Seleccioná texto (o un cuadro de texto) y corré este script. Lee el
+ * Selecciona texto (o un cuadro de texto) y ejecuta este script. Lee el
  * tamaño de fuente actual, busca el valor más cercano en una escala
  * armónica (una unidad base multiplicada por una proporción elevada a un
  * número entero -- la misma matemática que la Calculadora de Escala
@@ -67,7 +67,7 @@ if (!doc) {
 } else {
   const current = getCurrentHeight(doc);
   if (current == null) {
-    console.log('[Escala armónica] Seleccioná texto (o un cuadro de texto) primero.');
+    console.log('[Escala armónica] Selecciona texto (o un cuadro de texto) primero.');
   } else {
     const dlg = Dialog.create('Escala armónica \u2014 Ajustar tamaño de fuente');
     const col = dlg.addColumn();

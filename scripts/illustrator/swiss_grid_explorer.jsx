@@ -42,7 +42,7 @@ if (app.documents.length === 0) {
             rangeLabel: "Rango:", rangeHint: "ej. 1-3, 5", proportional: "Escalar proporcionalmente por mesa",
             helpScopeTitle: "Aplicar a varias mesas de trabajo",
             helpScopeText: "Activa: solo la mesa actual.\nTodas: cada mesa del documento.\nRango: las mesas que indiques (ej. 1-3, 5).\n\nEscalar proporcionalmente: cada mesa recibe una retícula adaptada a su propio tamaño (márgenes y medianil en proporción). Si lo desactivas, se usan los mismos valores fijos en todas.",
-            errRange: "Rango no válido. Usá números, guiones y comas (ej. 1-3, 5).",
+            errRange: "Rango no válido. Usa números, guiones y comas (ej. 1-3, 5).",
             btnAbout: "Acerca de...",
             aboutTitle: "Acerca de Swiss Grid Explorer",
             aboutText: "Swiss Grid Explorer " + VERSION + "\n\nUna herramienta de diseño paramétrico para la generación de retículas estructurales precisas en Adobe Illustrator.\n\nConcepto, UX/UI y Diseño: Victor Crespo www.3dvic.com\n2026 - Gracias por usarlo!."
